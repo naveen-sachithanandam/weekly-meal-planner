@@ -1,0 +1,610 @@
+openapi: 3.0.3
+info:
+  title: Family Meal Planner API (V1)
+  description: |
+    Next.js Route Handlers under `/api/*`. All week keys are **Sunday** calendar dates in **America/Toronto** (`YYYY-MM-DD`), matching `lib/week-boundary.ts`.
+
+    **Id semantics:** `PATCH` / `PATCH …/have` use **ShoppingLineGroup** ids. `DELETE /api/shopping-list/{id}` uses **ShoppingLineContribution** ids.
+
+    Canonical narrative: `api-routes.md`, `openapi.yaml` (this file), and `api-sequences.md` should stay aligned when routes change.
+  version: "1.0.0"
+
+servers:
+  - url: /
+    description: Next.js app origin (e.g. http://localhost:3000)
+
+tags:
+  - name: meal-plan
+    description: Weekly grid persistence
+  - name: shopping-list
+    description: Groups, contributions, checklist flags
+  - name: favourites
+    description: Seed favourite meals for pick lists
+
+paths:
+  /api/meal-plan:
+    get:
+      tags: [meal-plan]
+      summary: Load weekly plan
+      description: Returns nested `WeeklyPlan` or 404 if no row exists for the resolved week.
+      parameters:
+        - $ref: "#/components/parameters/WeekStartQuery"
+      responses:
+        "200":
+          description: Prisma-shaped weekly plan (days ordered Sun→Sat, slots breakfast→dinner).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyPlan"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          description: No plan for this week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              example:
+                error: "No plan found for this week"
+    post:
+      tags: [meal-plan]
+      summary: Save full weekly plan (last write wins)
+      description: Validates body, egg rule, then upserts plan/days/slots in a transaction. Recomputes `proteinWarning` server-side.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealPlanSaveRequest"
+      responses:
+        "200":
+          description: Reloaded full plan after save
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyPlan"
+        "400":
+          description: Validation or egg rule violation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /api/shopping-list:
+    get:
+      tags: [shopping-list]
+      summary: List shopping groups for a week
+      parameters:
+        - $ref: "#/components/parameters/WeekStartQuery"
+      responses:
+        "200":
+          description: Groups sorted for store walk order (see `lib/shopping-utils.ts`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingListGetResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          description: No weekly plan for resolved week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+
+  /api/shopping-list/clear:
+    post:
+      tags: [shopping-list]
+      summary: Clear all checked flags for the week
+      description: >-
+        Sets checked=false on every ShoppingLineGroup for the plan.
+        Does not change alreadyHave.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weekStart:
+                  type: string
+                  description: Optional Sunday `YYYY-MM-DD`; omit → current Toronto week.
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          description: No plan for week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /api/shopping-list/item:
+    post:
+      tags: [shopping-list]
+      summary: Add a shopping contribution (manual or meal-linked)
+      description: Merges into an existing **ShoppingLineGroup** when `mergeKey` matches the week; otherwise creates a group + first contribution.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddShoppingItemRequest"
+      responses:
+        "201":
+          description: Created contribution and parent group (with contributions)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddShoppingItemResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          description: No weekly plan for `weekStart`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /api/shopping-list/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: >-
+          PATCH uses ShoppingLineGroup id; DELETE uses ShoppingLineContribution id.
+    patch:
+      tags: [shopping-list]
+      summary: Set checked on a line group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [checked]
+              properties:
+                checked:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated group with contributions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingLineGroupWithContributions"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+        "500":
+          $ref: "#/components/responses/ServerError"
+    delete:
+      tags: [shopping-list]
+      summary: Delete one contribution
+      description: Removes a **ShoppingLineContribution**. Deletes empty parent **ShoppingLineGroup**.
+      responses:
+        "204":
+          description: Deleted (no body)
+        "404":
+          description: Contribution not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /api/shopping-list/{id}/have:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: ShoppingLineGroup id
+    patch:
+      tags: [shopping-list]
+      summary: Set alreadyHave (pantry) on a line group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [alreadyHave]
+              properties:
+                alreadyHave:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated group with contributions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingLineGroupWithContributions"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /api/favourites:
+    get:
+      tags: [favourites]
+      summary: List favourite meals
+      description: Ordered by category, then name (see seed).
+      responses:
+        "200":
+          description: Array of favourite rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FavoriteMeal"
+
+components:
+  parameters:
+    WeekStartQuery:
+      name: weekStart
+      in: query
+      required: false
+      schema:
+        type: string
+        pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: Sunday `YYYY-MM-DD` in America/Toronto. Omit → current week start.
+
+  responses:
+    BadRequestError:
+      description: Invalid query or JSON body
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+    ServerError:
+      description: Unexpected server/database error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+
+  schemas:
+    ErrorBody:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        field:
+          type: string
+          description: Optional field path for validation errors
+
+    DayOfWeek:
+      type: string
+      enum:
+        - SUNDAY
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+
+    MealSlotType:
+      type: string
+      enum: [BREAKFAST, LUNCH, DINNER]
+
+    StoreSection:
+      type: string
+      enum:
+        - PRODUCE
+        - DAIRY_AND_EGGS
+        - DRY_GOODS_AND_GRAINS
+        - PANTRY_AND_SPICES
+        - FROZEN
+
+    MealSlot:
+      type: object
+      required:
+        - id
+        - dayPlanId
+        - slot
+        - mainMealText
+        - proteinWarning
+        - isQuick
+        - isMakeAhead
+        - isEasy
+        - needsTime
+        - toddlerFriendly
+      properties:
+        id:
+          type: string
+        dayPlanId:
+          type: string
+        slot:
+          $ref: "#/components/schemas/MealSlotType"
+        mainMealText:
+          type: string
+        proteinWarning:
+          type: boolean
+        isQuick:
+          type: boolean
+        isMakeAhead:
+          type: boolean
+        isEasy:
+          type: boolean
+        needsTime:
+          type: boolean
+        toddlerFriendly:
+          type: boolean
+        toddlerNote:
+          type: string
+          nullable: true
+
+    MealSlotInput:
+      type: object
+      required:
+        - slot
+        - mainMealText
+        - isQuick
+        - isMakeAhead
+        - isEasy
+        - needsTime
+        - toddlerFriendly
+      properties:
+        slot:
+          $ref: "#/components/schemas/MealSlotType"
+        mainMealText:
+          type: string
+        isQuick:
+          type: boolean
+        isMakeAhead:
+          type: boolean
+        isEasy:
+          type: boolean
+        needsTime:
+          type: boolean
+        toddlerFriendly:
+          type: boolean
+        toddlerNote:
+          type: string
+          nullable: true
+
+    DayPlan:
+      type: object
+      required:
+        - id
+        - weeklyPlanId
+        - dayOfWeek
+        - isTrip
+        - mealSlots
+      properties:
+        id:
+          type: string
+        weeklyPlanId:
+          type: string
+        dayOfWeek:
+          $ref: "#/components/schemas/DayOfWeek"
+        isTrip:
+          type: boolean
+        tripNotes:
+          type: string
+          nullable: true
+        mealSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/MealSlot"
+
+    DayPlanInput:
+      type: object
+      required:
+        - dayOfWeek
+        - isTrip
+        - mealSlots
+      properties:
+        dayOfWeek:
+          $ref: "#/components/schemas/DayOfWeek"
+        isTrip:
+          type: boolean
+        tripNotes:
+          type: string
+          nullable: true
+        mealSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/MealSlotInput"
+
+    WeeklyPlan:
+      type: object
+      required:
+        - id
+        - weekStartSunday
+        - createdAt
+        - updatedAt
+        - days
+      properties:
+        id:
+          type: string
+        weekStartSunday:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayPlan"
+
+    MealPlanSaveRequest:
+      type: object
+      required:
+        - weekStartSunday
+        - days
+      properties:
+        weekStartSunday:
+          type: string
+          description: Sunday date `YYYY-MM-DD` or ISO instant matching Toronto Sunday midnight (see route parser).
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayPlanInput"
+
+    ShoppingLineContribution:
+      type: object
+      required:
+        - id
+        - shoppingLineGroupId
+        - quantityText
+        - sortOrder
+      properties:
+        id:
+          type: string
+        shoppingLineGroupId:
+          type: string
+        mealSlotId:
+          type: string
+          nullable: true
+        quantityText:
+          type: string
+        mergeUnitKey:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+
+    ShoppingLineGroupWithContributions:
+      type: object
+      required:
+        - id
+        - weeklyPlanId
+        - section
+        - displayName
+        - mergeKey
+        - checked
+        - alreadyHave
+        - sortOrder
+        - contributions
+      properties:
+        id:
+          type: string
+        weeklyPlanId:
+          type: string
+        section:
+          $ref: "#/components/schemas/StoreSection"
+        displayName:
+          type: string
+        mergeKey:
+          type: string
+        checked:
+          type: boolean
+        alreadyHave:
+          type: boolean
+        sortOrder:
+          type: integer
+        contributions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShoppingLineContribution"
+
+    ShoppingListGetResponse:
+      type: object
+      required:
+        - weekStart
+        - groups
+      properties:
+        weekStart:
+          type: string
+          description: Resolved Sunday as `YYYY-MM-DD` param string
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShoppingLineGroupWithContributions"
+
+    AddShoppingItemRequest:
+      type: object
+      required:
+        - weekStart
+        - displayName
+        - quantityText
+        - section
+      properties:
+        weekStart:
+          type: string
+          description: Sunday `YYYY-MM-DD` (Toronto)
+        displayName:
+          type: string
+        quantityText:
+          type: string
+        section:
+          $ref: "#/components/schemas/StoreSection"
+        mergeKey:
+          type: string
+          description: Optional; default is lowercased displayName
+        mergeUnitKey:
+          type: string
+          nullable: true
+        mealSlotId:
+          type: string
+          nullable: true
+          description: Must belong to the same week when set
+
+    AddShoppingItemResponse:
+      type: object
+      required:
+        - contribution
+        - group
+      properties:
+        contribution:
+          $ref: "#/components/schemas/ShoppingLineContribution"
+        group:
+          $ref: "#/components/schemas/ShoppingLineGroupWithContributions"
+
+    FavoriteMeal:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true

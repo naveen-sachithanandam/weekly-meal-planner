@@ -1,0 +1,35 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+dist/
+
+# Environment and local SQLite database files
+.env
+.env*.local
+
+# SQLite databases created by Prisma migrate / `db push` (common DATABASE_URL filenames)
+dev.db
+dev.db-journal
+prisma/dev.db
+prisma/dev.db-journal
+
+# Any other local SQLite files
+*.db
+*.db-journal
+
+# Logs and diagnostics
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+
+# Private family context — never commit
+SPEC.local.md
+*.local.md
+
+# Prisma generated client (regenerate via prisma generate)
+node_modules/.prisma/

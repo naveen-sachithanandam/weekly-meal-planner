@@ -1,0 +1,23 @@
+---
+description: Spec file split for Family Meal Planner
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+alwaysApply: true
+---
+
+**How this file fits with `family-meal-planner.mdc`:** **`family-meal-planner.mdc`** is the **primary** ruleset (read `SPEC.md` / `DESIGN.md`, tokens, `lib/*` discipline). **This file** only documents the **SPEC / SPEC.local / example** split and privacy rules so they stay explicit. Use **both** when editing TypeScript; do not duplicate stack or product rules here—that stays in **`SPEC.md`** and **`DESIGN.md`**.
+
+## Spec files
+
+- SPEC.md = public skeleton (GitHub)
+- SPEC.local.md = private real context
+  (local only, gitignored)
+- SPEC.local.example.md = reader template
+- Always read SPEC.md AND SPEC.local.md
+  when building — both together are
+  the full spec
+- Never include SPEC.local.md content
+  in code comments, hardcoded strings,
+  or `.cursor/rules/*.mdc` (no PII in rules)
+- Never suggest committing SPEC.local.md
