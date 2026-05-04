@@ -1,8 +1,6 @@
 # API routes (V1)
 
-All handlers live under **`app/api/`** as Next.js Route Handlers. Payload shapes belong in `types/api.ts` when implemented.
-
-**Machine-readable:** [`openapi.yaml`](openapi.yaml) (OpenAPI 3.0.3). **Sequence diagrams:** [`api-sequences.md`](api-sequences.md). Keep these three files aligned when you change routes or semantics.
+All handlers live under **`app/api/`** as Next.js Route Handlers. Payload shapes belong in `types/api.ts` when implemented. Keep this file aligned with **`app/api/`** when routes or semantics change.
 
 ## Meal plan
 

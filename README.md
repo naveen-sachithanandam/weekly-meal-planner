@@ -11,18 +11,18 @@ This directory is the **repository root**: product and engineering docs live alo
 This repo follows **SDD**: **written specifications are the source of truth** for behaviour, APIs, and data; **code stays aligned** with those docs (not the other way around).
 
 1. **Specs first (or specs in lockstep with code)**  
-   Product rules, UX intent, HTTP contracts, and persistence shape live in **Markdown**, plus **`spec/openapi.yaml`** and **Mermaid** diagrams where they help. You should be able to understand V1 without reading every source file.
+   Product rules, UX intent, HTTP contracts, and persistence shape live in **Markdown** and **Mermaid** diagrams (e.g. in **`spec/architecture.md`**) where they help. You should be able to understand V1 without reading every source file.
 
 2. **Where to look**
    - **`SPEC.md`** — public product + technical requirements (safe to publish).
-   - **`spec/`** — bundle index in [`spec/README.md`](spec/README.md): product mirror, architecture, data model, API routes, OpenAPI, sequence diagrams, decision log.
+   - **`spec/`** — bundle index in [`spec/README.md`](spec/README.md): product mirror, architecture, data model, API routes, decision log.
    - **`DESIGN.md`** and **`design-tokens.css`** — design intent and tokens (no hex hunting in components).
 
 3. **Public vs private**  
    Household-only narrative (schedules, names, store habits) belongs in **`SPEC.local.md`**, which is **gitignored**. Copy **`SPEC.local.example.md`** → **`SPEC.local.md`** and fill it in locally. Do **not** commit PII; **`.cursor/rules/*.mdc`** must stay generic (see rules in that folder).
 
 4. **When you change behaviour**  
-   Update **`SPEC.md`** (and keep **`spec/product-spec.md`** in sync), then adjust **`spec/openapi.yaml`** / **`spec/api-sequences.md`** if HTTP flows change, then code — ideally in the **same** change so reviewers can trace intent.
+   Update **`SPEC.md`** (and keep **`spec/product-spec.md`** in sync), then adjust **`spec/api-routes.md`** when HTTP routes or semantics change, then code — ideally in the **same** change so reviewers can trace intent.
 
 ---
 
@@ -37,8 +37,6 @@ This repo follows **SDD**: **written specifications are the source of truth** fo
 | [`spec/project-structure.md`](spec/project-structure.md) | Directory layout and file roles. |
 | [`spec/data-model.md`](spec/data-model.md) | Relational model vs `prisma/schema.prisma`. |
 | [`spec/api-routes.md`](spec/api-routes.md) | Route map and shopping semantics. |
-| [`spec/openapi.yaml`](spec/openapi.yaml) | OpenAPI 3.0.3 for `/api/*`. |
-| [`spec/api-sequences.md`](spec/api-sequences.md) | Mermaid sequence diagrams for main API flows. |
 | [`spec/architecture.md`](spec/architecture.md) | System and flow diagrams. |
 | [`spec/engineering-notes.md`](spec/engineering-notes.md) | Prisma/SQLite tooling notes. |
 | [`DESIGN.md`](DESIGN.md) | UX and visual intent. |
@@ -114,7 +112,7 @@ curl 'http://localhost:3000/api/meal-plan?weekStart=2025-06-08'
 
 ## Contributing
 
-- Prefer **small PRs**; when behaviour or APIs change, update **`SPEC.md`**, **`spec/product-spec.md`**, and **`spec/openapi.yaml`** / **`spec/api-sequences.md`** as needed in the same change.
+- Prefer **small PRs**; when behaviour or APIs change, update **`SPEC.md`**, **`spec/product-spec.md`**, and **`spec/api-routes.md`** as needed in the same change.
 - Do **not** commit **`.env`**, **`SPEC.local.md`**, secrets, or PII.
 
 ---
