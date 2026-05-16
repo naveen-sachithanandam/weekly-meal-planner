@@ -49,7 +49,14 @@ export function MealSlotCell({
       ) : slot === null ? (
         <MealSlotEmpty onStartEditing={onStartEditing} />
       ) : (
-        <MealSlotFilled mealName={slot.mealName} onStartEditing={onStartEditing} />
+        <MealSlotFilled
+          slotId={slot.id}
+          mealName={slot.mealName}
+          ingredientsStatus={slot.ingredientsStatus}
+          ingredients={slot.ingredients}
+          onStartEditing={onStartEditing}
+          onMutate={onMutate}
+        />
       )}
     </div>
   );
