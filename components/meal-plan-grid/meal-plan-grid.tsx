@@ -1,0 +1,47 @@
+"use client";
+
+import { useState } from "react";
+import useSWR from "swr";
+
+import { getWeekStart } from "../../lib/date";
+import { getRefreshInterval } from "../../lib/meal-plan-refresh";
+import type { MealPlanResponse } from "../../lib/types";
+import { DayColumn } from "./day-column";
+import { WeekNav } from "./week-nav";
+
+async function fetchMealPlan(url: string): Promise<MealPlanResponse> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to load meal plan");
+  }
+  return response.json() as Promise<MealPlanResponse>;
+}
+
+export function MealPlanGrid() {
+  const [weekOffset, setWeekOffset] = useState(0);
+  const weekStart = getWeekStart(weekOffset);
+  const swrKey = `/api/meal-plan?week=${weekStart}`;
+
+  const { data, error, isLoading } = useSWR(swrKey, fetchMealPlan, {
+    refreshInterval: (latestData) => getRefreshInterval(latestData?.days),
+  });
+
+  return (
+    <section>
+      <WeekNav
+        weekStart={weekStart}
+        weekOffset={weekOffset}
+        onPreviousWeek={() => setWeekOffset((offset) => Math.max(-1, offset - 1))}
+        onCurrentWeek={() => setWeekOffset(0)}
+        onNextWeek={() => setWeekOffset((offset) => offset + 1)}
+      />
+
+      {isLoading && <p>Loading meal plan…</p>}
+      {error && <p role="alert">Could not load meal plan.</p>}
+
+      <div className="flex gap-2">
+        {data?.days.map((day) => <DayColumn key={day.date} day={day} />)}
+      </div>
+    </section>
+  );
+}
