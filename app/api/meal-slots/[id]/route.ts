@@ -108,3 +108,29 @@ export async function PATCH(
 
   return NextResponse.json(serializeSlot(slot));
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
+
+  const existing = await prisma.mealSlot.findUnique({
+    where: { id },
+  });
+
+  if (!existing) {
+    return NextResponse.json({ error: "Meal slot not found" }, { status: 404 });
+  }
+
+  if (isPastDay(existing.date)) {
+    return NextResponse.json(
+      { error: "Cannot modify meal slots for past days" },
+      { status: 403 },
+    );
+  }
+
+  await prisma.mealSlot.delete({ where: { id } });
+
+  return new NextResponse(null, { status: 204 });
+}
