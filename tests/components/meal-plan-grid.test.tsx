@@ -67,8 +67,8 @@ describe("MealPlanGrid", () => {
     render(<MealPlanGrid />);
 
     expect(screen.getAllByTestId("day-column")).toHaveLength(7);
-    expect(screen.getByText("2026-05-10")).toBeInTheDocument();
-    expect(screen.getByText("2026-05-16")).toBeInTheDocument();
+    expect(screen.getByText("May 10")).toBeInTheDocument();
+    expect(screen.getByText("May 16")).toBeInTheDocument();
   });
 
   it("fetches meal plan data keyed by weekStart from getWeekStart(weekOffset)", () => {

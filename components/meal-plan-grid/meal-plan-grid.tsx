@@ -22,7 +22,7 @@ export function MealPlanGrid() {
   const weekStart = getWeekStart(weekOffset);
   const swrKey = `/api/meal-plan?week=${weekStart}`;
 
-  const { data, error, isLoading } = useSWR(swrKey, fetchMealPlan, {
+  const { data, error, isLoading, mutate } = useSWR(swrKey, fetchMealPlan, {
     refreshInterval: (latestData) => getRefreshInterval(latestData?.days),
   });
 
@@ -40,7 +40,9 @@ export function MealPlanGrid() {
       {error && <p role="alert">Could not load meal plan.</p>}
 
       <div className="flex gap-2">
-        {data?.days.map((day) => <DayColumn key={day.date} day={day} />)}
+        {data?.days.map((day) => (
+          <DayColumn key={day.date} day={day} onMutate={() => mutate()} />
+        ))}
       </div>
     </section>
   );
