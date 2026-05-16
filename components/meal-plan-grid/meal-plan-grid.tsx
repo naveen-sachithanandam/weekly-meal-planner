@@ -3,7 +3,6 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { getWeekStart } from "../../lib/date";
 import { getRefreshInterval } from "../../lib/meal-plan-refresh";
 import type { MealPlanResponse } from "../../lib/types";
 import { DayColumn } from "./day-column";
@@ -19,8 +18,7 @@ async function fetchMealPlan(url: string): Promise<MealPlanResponse> {
 
 export function MealPlanGrid() {
   const [weekOffset, setWeekOffset] = useState(0);
-  const weekStart = getWeekStart(weekOffset);
-  const swrKey = `/api/meal-plan?week=${weekStart}`;
+  const swrKey = `/api/meal-plan?offset=${weekOffset}`;
 
   const { data, error, isLoading, mutate } = useSWR(swrKey, fetchMealPlan, {
     refreshInterval: (latestData) => getRefreshInterval(latestData?.days),
@@ -29,7 +27,7 @@ export function MealPlanGrid() {
   return (
     <section>
       <WeekNav
-        weekStart={weekStart}
+        weekStart={data?.weekStart ?? ""}
         weekOffset={weekOffset}
         onPreviousWeek={() => setWeekOffset((offset) => Math.max(-1, offset - 1))}
         onCurrentWeek={() => setWeekOffset(0)}

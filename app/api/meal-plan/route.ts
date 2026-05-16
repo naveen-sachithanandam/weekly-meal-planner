@@ -14,7 +14,12 @@ function weekDates(weekStart: string): string[] {
 
 export async function GET(request: NextRequest) {
   const weekParam = request.nextUrl.searchParams.get("week");
-  const weekStart = weekParam ?? getWeekStart();
+  const offsetParam = request.nextUrl.searchParams.get("offset");
+  const weekStart = weekParam
+    ? weekParam
+    : offsetParam !== null && offsetParam !== ""
+      ? getWeekStart(Number(offsetParam))
+      : getWeekStart();
   const dates = weekDates(weekStart);
 
   const [slots, overrides] = await Promise.all([

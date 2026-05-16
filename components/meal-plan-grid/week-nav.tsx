@@ -1,4 +1,4 @@
-import { addDays, format, parse } from "date-fns";
+import { addDays, format, isValid, parse } from "date-fns";
 
 type WeekNavProps = {
   weekStart: string;
@@ -9,7 +9,15 @@ type WeekNavProps = {
 };
 
 export function formatWeekRange(weekStart: string): string {
+  if (!weekStart) {
+    return "";
+  }
+
   const start = parse(weekStart, "yyyy-MM-dd", new Date());
+  if (!isValid(start)) {
+    return "";
+  }
+
   const end = addDays(start, 6);
   return `${format(start, "MMM d")} – ${format(end, "MMM d, yyyy")}`;
 }
@@ -48,7 +56,9 @@ export function WeekNav({
       >
         Next week
       </button>
-      <p className="text-sm text-gray-700">{formatWeekRange(weekStart)}</p>
+      <p className="text-sm text-gray-700">
+        {formatWeekRange(weekStart) || "Loading week…"}
+      </p>
     </nav>
   );
 }

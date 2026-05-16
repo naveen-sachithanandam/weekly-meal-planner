@@ -7,14 +7,9 @@ import { MealPlanGrid } from "../../components/meal-plan-grid/meal-plan-grid";
 import type { MealPlanResponse } from "../../lib/types";
 
 const mockUseSWR = vi.fn();
-const mockGetWeekStart = vi.fn();
 
 vi.mock("swr", () => ({
   default: (...args: unknown[]) => mockUseSWR(...args),
-}));
-
-vi.mock("../../lib/date", () => ({
-  getWeekStart: (offset: number) => mockGetWeekStart(offset),
 }));
 
 function buildWeekResponse(weekStart: string): MealPlanResponse {
@@ -33,16 +28,12 @@ function buildWeekResponse(weekStart: string): MealPlanResponse {
 
 describe("MealPlanGrid", () => {
   beforeEach(() => {
-    mockGetWeekStart.mockImplementation((offset: number) => {
-      if (offset === -1) return "2026-05-03";
-      if (offset === 1) return "2026-05-17";
-      return "2026-05-10";
-    });
-
     mockUseSWR.mockImplementation((key: string) => {
-      const week = key.split("week=")[1];
+      const offset = Number(key.split("offset=")[1] ?? "0");
+      const weekStart =
+        offset === -1 ? "2026-05-03" : offset === 1 ? "2026-05-17" : "2026-05-10";
       return {
-        data: buildWeekResponse(week),
+        data: buildWeekResponse(weekStart),
         error: undefined,
         isLoading: false,
         mutate: vi.fn(),
@@ -71,43 +62,40 @@ describe("MealPlanGrid", () => {
     expect(screen.getByText("May 16")).toBeInTheDocument();
   });
 
-  it("fetches meal plan data keyed by weekStart from getWeekStart(weekOffset)", () => {
+  it("fetches meal plan data keyed by week offset", () => {
     render(<MealPlanGrid />);
 
     expect(mockUseSWR).toHaveBeenCalledWith(
-      "/api/meal-plan?week=2026-05-10",
+      "/api/meal-plan?offset=0",
       expect.any(Function),
       expect.objectContaining({ refreshInterval: expect.any(Function) }),
     );
     expect(lastSwrOptions().refreshInterval(buildWeekResponse("2026-05-10"))).toBe(0);
   });
 
-  it("changes weekStart when navigating weeks", () => {
+  it("changes week when navigating weeks", () => {
     render(<MealPlanGrid />);
 
     fireEvent.click(screen.getByRole("button", { name: /next week/i }));
 
-    expect(mockGetWeekStart).toHaveBeenCalledWith(1);
     expect(mockUseSWR).toHaveBeenLastCalledWith(
-      "/api/meal-plan?week=2026-05-17",
+      "/api/meal-plan?offset=1",
       expect.any(Function),
       expect.any(Object),
     );
 
     fireEvent.click(screen.getByRole("button", { name: /current week/i }));
 
-    expect(mockGetWeekStart).toHaveBeenCalledWith(0);
     expect(mockUseSWR).toHaveBeenLastCalledWith(
-      "/api/meal-plan?week=2026-05-10",
+      "/api/meal-plan?offset=0",
       expect.any(Function),
       expect.any(Object),
     );
 
     fireEvent.click(screen.getByRole("button", { name: /previous week/i }));
 
-    expect(mockGetWeekStart).toHaveBeenCalledWith(-1);
     expect(mockUseSWR).toHaveBeenLastCalledWith(
-      "/api/meal-plan?week=2026-05-03",
+      "/api/meal-plan?offset=-1",
       expect.any(Function),
       expect.any(Object),
     );
@@ -122,8 +110,10 @@ describe("MealPlanGrid", () => {
 
   it("sets SWR refreshInterval to 3000 when any slot is PENDING", () => {
     mockUseSWR.mockImplementation((key: string) => {
-      const week = key.split("week=")[1];
-      const data = buildWeekResponse(week);
+      const offset = Number(key.split("offset=")[1] ?? "0");
+      const weekStart =
+        offset === -1 ? "2026-05-03" : offset === 1 ? "2026-05-17" : "2026-05-10";
+      const data = buildWeekResponse(weekStart);
       data.days[0].slots = [
         {
           id: "slot-1",

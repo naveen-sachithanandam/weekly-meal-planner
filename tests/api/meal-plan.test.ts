@@ -49,6 +49,16 @@ describe("GET /api/meal-plan", () => {
     ]);
   });
 
+  it("returns a week for the given offset query", async () => {
+    const response = await getMealPlan("?offset=1");
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.weekStart).toBe("2026-05-17");
+    expect(body.days[0].date).toBe("2026-05-17");
+    expect(body.days[6].date).toBe("2026-05-23");
+  });
+
   it("returns a specific week when the week query is provided", async () => {
     const response = await getMealPlan("?week=2025-01-05");
     const body = await response.json();
