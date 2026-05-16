@@ -1,0 +1,36 @@
+---
+description: Private household context. Loaded alongside the constitution. Contains cuisine, toddler dietary details, and meal examples specific to this household.
+alwaysApply: true
+---
+
+# Household Context (private — do not commit)
+
+Copy this file to `household-context.mdc` and fill in your values.
+`household-context.mdc` is gitignored.
+
+---
+
+## Cuisine
+# Describe the household's culinary background.
+# Example: South Indian and Maharashtrian. Common dishes: idli, dosa, sambar, varan bhaat.
+
+## Toddler dietary constraint
+# Describe what "toddler-appropriate" means for your household.
+# Example: Low-spice. No fresh chilli or significant chilli powder.
+
+## Toddler-appropriate examples
+# List 4–6 meals that are valid for toddler slots.
+# -
+# -
+
+## Not toddler-appropriate (adults only)
+# List 4–6 meals that are not valid for toddler slots.
+# -
+# -
+
+## Ollama prompt context
+# One sentence to append to Ollama ingredient prompts to improve relevance.
+# Example: "This is a South Indian household. Use authentic regional ingredients per availability in North America"
+
+## Timezone
+HOME_TIMEZONE=

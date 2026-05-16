@@ -1,0 +1,28 @@
+# Local household context for Feature 001 — do not commit
+
+Copy this file to spec.local.md and fill in your values.
+spec.local.md is gitignored.
+
+---
+
+## Cuisine
+# Describe the household's culinary background.
+# Example: South Indian and Maharashtrian.
+
+## Toddler dietary constraint
+# Describe what "toddler-appropriate" means for your household.
+# Example: Low-spice. No fresh chilli or significant chilli powder.
+
+## Toddler-appropriate meals
+# List 4–6 meals that are valid for toddler slots.
+# -
+# -
+
+## Adults-only meals (not toddler-appropriate)
+# List 4–6 meals that are not valid for toddler slots.
+# -
+# -
+
+## User journeys — household examples
+# Optional: replace the generic journey examples with real meal names
+# from your household for local reference.

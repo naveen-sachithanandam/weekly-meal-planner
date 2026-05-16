@@ -1,6 +1,0 @@
-@import "../design-tokens.css";
-
-/** Global CSS entry where Tailwind layers (and any design tokens) are wired for the whole App Router tree. */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;

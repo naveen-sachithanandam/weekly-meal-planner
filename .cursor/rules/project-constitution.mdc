@@ -1,0 +1,111 @@
+---
+description: Project-wide constitution for the Weekly Meal Planner. Loaded before every task. Feature specs may not override anything here.
+alwaysApply: true
+---
+
+# Weekly Meal Planner — Project Constitution
+
+This file is the single source of truth for project-wide decisions.
+Feature specs (sdd/00X-feature/) may not override anything here.
+
+---
+
+## 1. What We Are Building
+
+Single-household weekly meal planner. 2 adults + toddler. Runs locally
+on a Mac Mini, accessed over the home network. No cloud, no accounts,
+no auth. Plans meals for current week, next week, and previous week
+(read-only). Local Ollama suggests ingredients. Ingredient approval
+feeds the shopping list. Family rules constrain meal slots.
+
+Household-specific context (cuisine, toddler dietary constraints,
+meal examples) is in `.cursor/rules/household-context.mdc` (gitignored).
+If that file is present, load it — its values take precedence for
+any Ollama prompts and meal examples.
+
+---
+
+## 2. Tech Stack
+
+| Layer         | Choice                        |
+|---------------|-------------------------------|
+| Framework     | Next.js 15 (App Router)       |
+| Language      | TypeScript 5                  |
+| UI            | React 19 + Tailwind CSS       |
+| Data access   | Prisma ORM                    |
+| Database      | SQLite                        |
+| Data fetching | SWR                           |
+| Date handling | date-fns + date-fns-tz        |
+| AI            | Ollama (local, home network)  |
+
+Do not introduce new dependencies without a spec note explaining why.
+
+---
+
+## 3. Non-Negotiable Rules
+
+These invariants apply to every feature, every file, every task.
+
+1. **Home timezone is the single source of truth.**
+   All day boundary calculations use the timezone set in app config.
+   Device timezone is never used. Both users always see the same day state.
+
+2. **The app never blocks on Ollama.**
+   If Ollama is unavailable, the meal slot saves with an empty ingredient
+   list. A message is shown. The user can retry or enter ingredients manually.
+
+3. **Past days are always read-only.**
+   Yesterday and earlier: no edit controls, no interaction.
+   Today and all future days are always editable, regardless of time of day.
+
+4. **Weeks always start on Sunday.**
+   Sunday is always the first column. Week rollover is Sunday 00:00
+   in the home timezone.
+
+5. **Slots save before Ollama responds.**
+   The meal name is persisted to the database immediately on confirm.
+   Ollama runs in the background. The UI never waits for AI before saving.
+
+6. **Toddler is a constraint, not a user.**
+   The toddler has no account, no persona in the UI, no direct interaction.
+   Her schedule (daycare Mon–Fri, home Sat–Sun) is hardcoded in the rules
+   engine. Day-level overrides are stored in the database.
+
+7. **No authentication.**
+   The app assumes a trusted home network. There are no login screens,
+   no sessions, no passwords, no tokens.
+
+8. **Single household only.**
+   No multi-tenancy. No concept of switching households.
+
+9. **Household context comes from environment variables.**
+   Timezone, Ollama connection, model name, and cuisine context are read
+   from env (via `lib/env.ts`). Never embed deployment-specific strings
+   (cuisine names, regions, example dishes) in shared application code.
+
+---
+
+## 4. Coding Conventions
+
+- **File naming:** kebab-case for files and folders. `meal-slot.tsx`, not `MealSlot.tsx`.
+- **Component location:** `components/` for shared UI. Route-specific components co-located in the route folder.
+- **API routes:** Next.js App Router route handlers in `app/api/`.
+- **Database access:** Always via Prisma client. No raw SQL.
+- **Date handling:** Always import from `date-fns-tz`. Never use `new Date()` for day boundary logic.
+- **Types:** Define shared types in `lib/types.ts`. No inline `any`.
+- **Error handling:** API routes return `{ error: string }` with appropriate HTTP status. No unhandled promise rejections.
+- **SWR:** Use for all client-side data fetching. No `useEffect` + `fetch` patterns.
+
+---
+
+## 5. What the AI Must Never Do
+
+- **Never add authentication** — no login, no sessions, no middleware auth checks.
+- **Never suggest cloud storage or external databases** — SQLite on the local machine only.
+- **Never change the database schema without a matching spec update** — schema changes require a task in the relevant feature spec.
+- **Never add a dependency not in the tech stack** — propose it in a spec note first.
+- **Never make past days editable** — this is a hard rule, not a UI preference.
+- **Never block a save on Ollama** — ingredient generation is always async and always optional.
+- **Never invent family rules** — rules are defined in Feature 002. Do not hardcode meal constraints outside the rules engine.
+- **Never hardcode household context** — no cuisine strings, timezones, or Ollama URLs/models in source. Use `lib/env.ts`.
+- **Never expand scope beyond the current task** — implement exactly what the task describes, no more.
