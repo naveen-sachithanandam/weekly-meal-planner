@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model MealSlot {
+  id                   String            @id @default(cuid())
+  date                 String // YYYY-MM-DD in home timezone
+  mealType             MealType
+  mealName             String
+  isToddlerAppropriate Boolean           @default(false)
+  ingredientsStatus    IngredientsStatus @default(PENDING)
+  ingredients          Ingredient[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@unique([date, mealType])
+}
+
+model Ingredient {
+  id         String   @id @default(cuid())
+  mealSlotId String
+  mealSlot   MealSlot @relation(fields: [mealSlotId], references: [id], onDelete: Cascade)
+  name       String
+  approved   Boolean  @default(false)
+}
+
+model ToddlerOverride {
+  id     String  @id @default(cuid())
+  date   String  @unique // YYYY-MM-DD in home timezone
+  isHome Boolean
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+enum IngredientsStatus {
+  PENDING // Ollama has been called, waiting for response
+  READY // Ingredients returned and stored
+  FAILED // Ollama timed out or errored
+  EMPTY // No ingredients (Ollama was unavailable at save time)
+}
