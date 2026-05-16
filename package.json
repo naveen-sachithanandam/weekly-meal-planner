@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
@@ -19,12 +21,16 @@
     "swr": "^2.4.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.8",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.14",
+    "@types/node": "^22.15.21",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "jsdom": "^29.1.1",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8",
     "prisma": "^6.11.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
