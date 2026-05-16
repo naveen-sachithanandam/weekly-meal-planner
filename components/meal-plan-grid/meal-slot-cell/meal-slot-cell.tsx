@@ -1,21 +1,48 @@
+"use client";
+
+import { useState } from "react";
+
 import type { MealPlanSlot } from "../../../lib/types";
+import { MealSlotEditing } from "./meal-slot-editing";
+import { MealSlotEmpty } from "./meal-slot-empty";
+import { MealSlotFilled } from "./meal-slot-filled";
 
 type MealSlotCellProps = {
   slot: MealPlanSlot | null;
   mealType: string;
   date: string;
   isPast: boolean;
+  onMutate?: () => void | Promise<unknown>;
 };
 
-export function MealSlotCell({ slot, mealType, date, isPast }: MealSlotCellProps) {
+export function MealSlotCell({
+  slot,
+  mealType,
+  date,
+  isPast,
+}: MealSlotCellProps) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const onStartEditing = () => setIsEditing(true);
+
   return (
     <div
       data-testid={`meal-slot-${mealType.toLowerCase()}`}
       data-date={date}
       data-past={isPast}
-      className="min-h-12 rounded border border-dashed border-gray-200 p-2 text-xs text-gray-400"
+      className="min-h-12"
     >
-      {slot?.mealName ?? "—"}
+      {isPast ? (
+        <p className="rounded border border-gray-200 px-2 py-2 text-xs text-gray-600">
+          {slot?.mealName ?? "—"}
+        </p>
+      ) : isEditing ? (
+        <MealSlotEditing />
+      ) : slot === null ? (
+        <MealSlotEmpty onStartEditing={onStartEditing} />
+      ) : (
+        <MealSlotFilled mealName={slot.mealName} onStartEditing={onStartEditing} />
+      )}
     </div>
   );
 }

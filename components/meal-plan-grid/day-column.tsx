@@ -34,6 +34,7 @@ export function DayColumn({ day, onMutate }: DayColumnProps) {
             mealType={mealType}
             date={day.date}
             isPast={day.isPast}
+            onMutate={onMutate}
           />
         );
       })}
