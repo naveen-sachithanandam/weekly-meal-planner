@@ -78,7 +78,8 @@ describe("MealSlotCell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /add meal/i }));
 
-    expect(screen.getByText("editing")).toBeInTheDocument();
+    expect(screen.getByLabelText(/meal name/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /confirm/i })).toBeInTheDocument();
   });
 
   it("renders filled state for slots that are not being edited", () => {
@@ -92,7 +93,7 @@ describe("MealSlotCell", () => {
     );
 
     expect(screen.getByRole("button", { name: "Dal rice" })).toBeInTheDocument();
-    expect(screen.queryByText("editing")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/meal name/i)).not.toBeInTheDocument();
   });
 
   it("enters editing when filled meal name is clicked", () => {
@@ -107,7 +108,7 @@ describe("MealSlotCell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Sambar rice" }));
 
-    expect(screen.getByText("editing")).toBeInTheDocument();
+    expect(screen.getByLabelText(/meal name/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Sambar rice" })).not.toBeInTheDocument();
   });
 });

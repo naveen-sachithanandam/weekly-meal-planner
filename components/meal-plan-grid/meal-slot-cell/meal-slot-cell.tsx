@@ -20,10 +20,13 @@ export function MealSlotCell({
   mealType,
   date,
   isPast,
+  onMutate,
 }: MealSlotCellProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   const onStartEditing = () => setIsEditing(true);
+  const onCancel = () => setIsEditing(false);
+  const onSaved = () => onMutate?.();
 
   return (
     <div
@@ -37,7 +40,12 @@ export function MealSlotCell({
           {slot?.mealName ?? "—"}
         </p>
       ) : isEditing ? (
-        <MealSlotEditing />
+        <MealSlotEditing
+          date={date}
+          mealType={mealType}
+          onSaved={onSaved}
+          onCancel={onCancel}
+        />
       ) : slot === null ? (
         <MealSlotEmpty onStartEditing={onStartEditing} />
       ) : (
