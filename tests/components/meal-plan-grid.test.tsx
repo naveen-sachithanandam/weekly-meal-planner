@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MealPlanGrid } from "../../components/meal-plan-grid/meal-plan-grid";
@@ -73,10 +73,14 @@ describe("MealPlanGrid", () => {
     expect(lastSwrOptions().refreshInterval(buildWeekResponse("2026-05-10"))).toBe(0);
   });
 
+  function weekNav() {
+    return within(screen.getByRole("navigation"));
+  }
+
   it("changes week when navigating weeks", () => {
     render(<MealPlanGrid />);
 
-    fireEvent.click(screen.getByRole("button", { name: /next week/i }));
+    fireEvent.click(weekNav().getByRole("button", { name: /next week/i }));
 
     expect(mockUseSWR).toHaveBeenLastCalledWith(
       "/api/meal-plan?offset=1",
@@ -84,7 +88,7 @@ describe("MealPlanGrid", () => {
       expect.any(Object),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /current week/i }));
+    fireEvent.click(weekNav().getByRole("button", { name: /current week/i }));
 
     expect(mockUseSWR).toHaveBeenLastCalledWith(
       "/api/meal-plan?offset=0",
@@ -92,7 +96,7 @@ describe("MealPlanGrid", () => {
       expect.any(Object),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /previous week/i }));
+    fireEvent.click(weekNav().getByRole("button", { name: /previous week/i }));
 
     expect(mockUseSWR).toHaveBeenLastCalledWith(
       "/api/meal-plan?offset=-1",
@@ -104,8 +108,44 @@ describe("MealPlanGrid", () => {
   it("disables previous week at the oldest allowed week", () => {
     render(<MealPlanGrid />);
 
-    fireEvent.click(screen.getByRole("button", { name: /previous week/i }));
-    expect(screen.getByRole("button", { name: /previous week/i })).toBeDisabled();
+    fireEvent.click(weekNav().getByRole("button", { name: /previous week/i }));
+    expect(weekNav().getByRole("button", { name: /previous week/i })).toBeDisabled();
+  });
+
+  it("disables next week at the newest allowed week", () => {
+    render(<MealPlanGrid />);
+
+    fireEvent.click(weekNav().getByRole("button", { name: /next week/i }));
+
+    expect(mockUseSWR).toHaveBeenLastCalledWith(
+      "/api/meal-plan?offset=1",
+      expect.any(Function),
+      expect.any(Object),
+    );
+
+    expect(weekNav().getByRole("button", { name: /next week/i })).toBeDisabled();
+
+    const headerNextButtons = screen.getAllByRole("button", {
+      name: /^next week$/i,
+    });
+    for (const button of headerNextButtons) {
+      expect(button).toBeDisabled();
+    }
+  });
+
+  it("navigates via day header chevrons", () => {
+    render(<MealPlanGrid />);
+
+    const headerNextButtons = screen.getAllByRole("button", {
+      name: /^next week$/i,
+    });
+    fireEvent.click(headerNextButtons[headerNextButtons.length - 1]!);
+
+    expect(mockUseSWR).toHaveBeenLastCalledWith(
+      "/api/meal-plan?offset=1",
+      expect.any(Function),
+      expect.any(Object),
+    );
   });
 
   it("sets SWR refreshInterval to 3000 when any slot is PENDING", () => {

@@ -279,43 +279,56 @@ resolve. Re-POST with `force: true` to save despite conflicts.
            `components/meal-plan-grid/week-nav.tsx`
 
 Create `MealPlanGrid` as the root component:
-- Owns `weekOffset` state (number, default 0).
+- Owns `weekOffset` state (number, default 0). This is the single source
+  of truth for week navigation — never duplicated in child components.
 - Derives `weekStart` from `weekOffset` — call `GET /api/meal-plan?week=`
   via SWR, keyed by `weekStart`.
 - While any slot has `ingredientsStatus === 'PENDING'`, set SWR
   `refreshInterval` to 3000ms. Otherwise set to 0.
 - Renders `<WeekNav>` and 7 `<DayColumn>` components.
+- Passes the following props to each `<DayColumn>` (for DayHeader navigation):
+  - `onPrevWeek: () => void` — decrements weekOffset
+  - `onNextWeek: () => void` — increments weekOffset
+  - `canGoPrev: boolean` — false when `weekOffset === -1`
+  - `canGoNext: boolean` — false when `weekOffset === 1`
 
 Create `WeekNav`:
 - Previous week / current week / next week buttons.
 - Displays the week date range as a label.
-- Previous week button disabled when already on the most previous
-  allowed week (previous week relative to current).
+- Previous week button disabled when `weekOffset === -1`.
+- Next week button disabled when `weekOffset === 1`.
 
 **Done when:**
 - Grid renders 7 columns for the current week.
 - Navigating to next/previous week fetches and renders the correct data.
 - Current week button returns to offset 0.
 - SWR polls every 3s when any slot is PENDING, stops when all resolved.
+- `onPrevWeek`, `onNextWeek`, `canGoPrev`, `canGoNext` are passed to each DayColumn.
 
 **Do not:** fetch data with `useEffect` + `fetch`. Use SWR only.
+**Do not:** own `weekOffset` state in DayColumn or DayHeader — pass callbacks only.
 
 ---
 
 ## T012 — DayColumn + DayHeader
 
-**Implements:** plan.md §3 — day column and header
+**Implements:** plan.md §3 — day column and header, spec AC-009
 **Files:** `components/meal-plan-grid/day-column.tsx`,
            `components/meal-plan-grid/day-header.tsx`
 
 Create `DayColumn`:
 - Receives a `day` object (from the API response).
-- Renders `<DayHeader>` and three `<MealSlotCell>` components
-  (BREAKFAST, LUNCH, DINNER).
+- Receives and passes through navigation props from MealPlanGrid:
+  `onPrevWeek`, `onNextWeek`, `canGoPrev`, `canGoNext`.
+- Renders `<DayHeader>` (with all navigation props) and three
+  `<MealSlotCell>` components (BREAKFAST, LUNCH, DINNER).
 - If `day.isPast`, renders with a greyed-out style.
 
 Create `DayHeader`:
-- Displays the day name and date.
+- Displays the day name and date label.
+- Renders a previous week chevron (`‹`) and next week chevron (`›`)
+  alongside the date label — these call `onPrevWeek` / `onNextWeek`.
+- Chevrons are disabled (not hidden) when `canGoPrev` / `canGoNext` is false.
 - Shows a toddler indicator (small icon or label) when `isToddlerHome` is true.
 - Shows a toggle to mark/unmark the day as toddler home.
 - Toggle calls `POST /api/toddler-overrides`.
@@ -328,6 +341,12 @@ Create `DayHeader`:
 - Toddler indicator appears on weekends and override days.
 - Toddler toggle calls the correct API route.
 - Conflict prompt appears and works before force-saving.
+- Prev/next chevrons appear in the date header and navigate weeks correctly.
+- Prev chevron is disabled when on the oldest allowed week.
+- Next chevron is disabled when on the newest allowed week (next week).
+
+**Do not:** own `weekOffset` state in DayHeader. Call the passed callbacks only.
+**Do not:** hide chevrons when disabled — disable them so the user understands the boundary.
 
 ---
 
@@ -440,3 +459,4 @@ from `spec.md` manually:
 - [ ] AC-006 — Toddler home day flagging shows conflicts and prompts review
 - [ ] AC-007 — Sunday is always first column
 - [ ] AC-008 — Editing meal name discards ingredients and re-runs Ollama
+- [ ] AC-009 — Prev/next week chevrons in date column header navigate weeks; disabled at boundaries

@@ -6,6 +6,8 @@ type WeekNavProps = {
   onPreviousWeek: () => void;
   onCurrentWeek: () => void;
   onNextWeek: () => void;
+  canGoPrev: boolean;
+  canGoNext: boolean;
 };
 
 export function formatWeekRange(weekStart: string): string {
@@ -28,6 +30,8 @@ export function WeekNav({
   onPreviousWeek,
   onCurrentWeek,
   onNextWeek,
+  canGoPrev,
+  canGoNext,
 }: WeekNavProps) {
   return (
     <nav className="mb-4 flex flex-wrap items-center gap-3">
@@ -35,7 +39,7 @@ export function WeekNav({
         type="button"
         aria-label="Previous week"
         onClick={onPreviousWeek}
-        disabled={weekOffset <= -1}
+        disabled={!canGoPrev}
         className="rounded border px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Previous week
@@ -52,7 +56,8 @@ export function WeekNav({
         type="button"
         aria-label="Next week"
         onClick={onNextWeek}
-        className="rounded border px-3 py-1"
+        disabled={!canGoNext}
+        className="rounded border px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Next week
       </button>

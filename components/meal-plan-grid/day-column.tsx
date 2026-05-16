@@ -1,4 +1,4 @@
-import type { MealPlanDay } from "../../lib/types";
+import type { MealPlanDay, WeekNavigationProps } from "../../lib/types";
 import { DayHeader } from "./day-header";
 import { MealSlotCell } from "./meal-slot-cell/meal-slot-cell";
 
@@ -7,9 +7,16 @@ const MEAL_TYPES = ["BREAKFAST", "LUNCH", "DINNER"] as const;
 type DayColumnProps = {
   day: MealPlanDay;
   onMutate: () => void | Promise<unknown>;
-};
+} & WeekNavigationProps;
 
-export function DayColumn({ day, onMutate }: DayColumnProps) {
+export function DayColumn({
+  day,
+  onMutate,
+  onPrevWeek,
+  onNextWeek,
+  canGoPrev,
+  canGoNext,
+}: DayColumnProps) {
   return (
     <div
       data-testid="day-column"
@@ -23,6 +30,10 @@ export function DayColumn({ day, onMutate }: DayColumnProps) {
         isToddlerHome={day.isToddlerHome}
         isPast={day.isPast}
         onMutate={onMutate}
+        onPrevWeek={onPrevWeek}
+        onNextWeek={onNextWeek}
+        canGoPrev={canGoPrev}
+        canGoNext={canGoNext}
       />
 
       {MEAL_TYPES.map((mealType) => {

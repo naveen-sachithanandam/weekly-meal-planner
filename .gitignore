@@ -27,3 +27,6 @@ dist/
 
 #Cursor Skills
 .agents/skills/
+
+#Article files
+*article-*.md

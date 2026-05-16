@@ -112,10 +112,11 @@ Monday and Tuesday slots are visible but locked — greyed
 out, non-interactive.
 
 ### Journey 3 — Planning next week in advance
-It's Friday. The Planner navigates to next week's grid.
-All slots are empty and editable. They plan the full week.
-Returning to the current week view, nothing has changed.
-Both weeks hold their state independently.
+It's Friday. The Planner navigates to next week's grid using either
+the WeekNav controls at the top or the prev/next arrows in the date
+column header — both produce the same result. All slots are empty
+and editable. They plan the full week. Returning to the current week
+view, nothing has changed. Both weeks hold their state independently.
 
 ### Journey 4 — Marking a toddler home day
 The Planner marks Monday next week as "toddler home" —
@@ -167,6 +168,14 @@ When they navigate to next week or previous week
 Then the grid renders the correct 7-day window starting Sunday
 And the navigated week retains its saved state
 And previous week slots are all read-only
+
+### AC-009 — Week navigation from date column header
+Given the user is viewing any week
+When they click the previous or next week control in the date column header
+Then the grid navigates to the previous or next week
+And the behaviour is identical to navigating via the WeekNav component
+And the previous week control is disabled when already on the oldest allowed week
+And the next week control is disabled when already on the newest allowed week (next week)
 
 ### AC-006 — Toddler home day flagging
 Given a future day already has meals planned

@@ -24,14 +24,26 @@ export function MealPlanGrid() {
     refreshInterval: (latestData) => getRefreshInterval(latestData?.days),
   });
 
+  const canGoPrev = weekOffset > -1;
+  const canGoNext = weekOffset < 1;
+
+  const weekNavigation = {
+    onPrevWeek: () => setWeekOffset((offset) => Math.max(-1, offset - 1)),
+    onNextWeek: () => setWeekOffset((offset) => Math.min(1, offset + 1)),
+    canGoPrev,
+    canGoNext,
+  };
+
   return (
     <section>
       <WeekNav
         weekStart={data?.weekStart ?? ""}
         weekOffset={weekOffset}
-        onPreviousWeek={() => setWeekOffset((offset) => Math.max(-1, offset - 1))}
+        onPreviousWeek={weekNavigation.onPrevWeek}
         onCurrentWeek={() => setWeekOffset(0)}
-        onNextWeek={() => setWeekOffset((offset) => offset + 1)}
+        onNextWeek={weekNavigation.onNextWeek}
+        canGoPrev={canGoPrev}
+        canGoNext={canGoNext}
       />
 
       {isLoading && <p>Loading meal plan…</p>}
@@ -39,7 +51,12 @@ export function MealPlanGrid() {
 
       <div className="flex gap-2">
         {data?.days.map((day) => (
-          <DayColumn key={day.date} day={day} onMutate={() => mutate()} />
+          <DayColumn
+            key={day.date}
+            day={day}
+            onMutate={() => mutate()}
+            {...weekNavigation}
+          />
         ))}
       </div>
     </section>

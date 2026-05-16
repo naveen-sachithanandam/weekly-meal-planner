@@ -211,10 +211,14 @@ app/
 
 components/
 ├── meal-plan-grid/
-│   ├── meal-plan-grid.tsx          ← root: fetches week data via SWR, owns week navigation state
+│   ├── meal-plan-grid.tsx          ← root: fetches week data via SWR, owns week navigation state;
+│   │                                  passes onPrevWeek / onNextWeek / canGoPrev / canGoNext
+│   │                                  down to DayColumn (and on to DayHeader)
 │   ├── week-nav.tsx                ← prev / current / next week buttons + week label
-│   ├── day-column.tsx              ← one column per day; receives day data, renders header + 3 slots
-│   ├── day-header.tsx              ← date label, toddler indicator, toddler override toggle
+│   ├── day-column.tsx              ← one column per day; receives day data + navigation callbacks;
+│   │                                  passes navigation callbacks through to DayHeader
+│   ├── day-header.tsx              ← date label, toddler indicator, toddler override toggle;
+│   │                                  ALSO renders prev/next week chevrons using navigation callbacks
 │   └── meal-slot-cell/
 │       ├── meal-slot-cell.tsx      ← orchestrates empty / editing / filled states
 │       ├── meal-slot-empty.tsx     ← click-to-edit empty state
@@ -225,9 +229,23 @@ components/
 ```
 
 **State ownership:**
-- Week offset (0 = current, 1 = next, -1 = previous) — local state in `meal-plan-grid.tsx`.
+- Week offset (0 = current, 1 = next, -1 = previous) — local state in `meal-plan-grid.tsx`. This is the single source of truth for week navigation — never duplicated in child components.
 - Week data (slots, toddler overrides, isPast flags) — SWR cache, keyed by week Sunday date.
 - Editing state (which cell is open) — local state in `meal-slot-cell.tsx`.
+
+**Navigation prop drilling — `meal-plan-grid.tsx` → `day-column.tsx` → `day-header.tsx`:**
+
+```typescript
+// Props passed from MealPlanGrid down to DayColumn and DayHeader
+type WeekNavProps = {
+  onPrevWeek: () => void
+  onNextWeek: () => void
+  canGoPrev: boolean   // false when weekOffset === -1 (previous week — oldest allowed)
+  canGoNext: boolean   // false when weekOffset === 1 (next week — newest allowed)
+}
+```
+
+`DayHeader` renders small chevron buttons (`‹` / `›`) alongside the date label. These call `onPrevWeek` / `onNextWeek` directly. The chevrons are disabled (not just hidden) when `canGoPrev` / `canGoNext` is false — same boundary rules as `WeekNav`.
 
 **SWR polling:** While any slot in the current week has `ingredientsStatus === "PENDING"`, SWR refreshes every 3 seconds. Polling stops when all slots are `READY`, `FAILED`, or `EMPTY`.
 

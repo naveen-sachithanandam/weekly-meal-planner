@@ -26,3 +26,11 @@ export type MealPlanResponse = {
   weekStart: string;
   days: MealPlanDay[];
 };
+
+/** Drilled from MealPlanGrid → DayColumn → DayHeader (AC-009). */
+export type WeekNavigationProps = {
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+  canGoPrev: boolean;
+  canGoNext: boolean;
+};
