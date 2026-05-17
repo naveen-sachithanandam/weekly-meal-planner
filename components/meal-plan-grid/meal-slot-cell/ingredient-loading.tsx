@@ -2,11 +2,11 @@ export function IngredientLoading() {
   return (
     <div
       role="status"
-      className="mt-2 flex items-center gap-2 text-xs text-gray-600"
+      className="flex items-center gap-2 text-xs text-[var(--badge-pending-text)]"
     >
       <span
         aria-hidden
-        className="inline-block size-3 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"
+        className="inline-block size-3 animate-spin rounded-full border-2 border-[var(--badge-pending-bg)] border-t-[var(--badge-pending-text)]"
       />
       <span>Generating ingredients…</span>
     </div>

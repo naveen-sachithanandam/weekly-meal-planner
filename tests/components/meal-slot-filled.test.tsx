@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MealSlotFilled } from "../../components/meal-plan-grid/meal-slot-cell/meal-slot-filled";
 import type { MealPlanIngredient } from "../../lib/types";
+import { mealSlotExpandProps } from "../helpers/meal-slot-expand";
 
 const ingredients: MealPlanIngredient[] = [
   { id: "ing-1", name: "Toor dal", approved: false },
@@ -31,23 +32,28 @@ describe("MealSlotFilled", () => {
         ingredients={ingredients}
         onStartEditing={onStartEditing}
         onMutate={onMutate}
+        {...mealSlotExpandProps(true)}
         {...overrides}
       />,
     );
   }
 
-  it("renders the meal name and calls onStartEditing when clicked", () => {
-    renderFilled();
+  it("calls onToggleExpand when header is clicked", () => {
+    const expand = mealSlotExpandProps(false);
+    renderFilled(expand);
 
-    fireEvent.click(screen.getByRole("button", { name: "Sambar rice" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Sambar rice, expand ingredients" }),
+    );
 
-    expect(onStartEditing).toHaveBeenCalledTimes(1);
+    expect(expand.onToggleExpand).toHaveBeenCalledTimes(1);
+    expect(onStartEditing).not.toHaveBeenCalled();
   });
 
   it("shows the loading state when ingredients are pending", () => {
     renderFilled({ ingredientsStatus: "PENDING", ingredients: [] });
 
-    expect(screen.getByRole("status")).toHaveTextContent("Generating ingredients…");
+    expect(screen.getByLabelText("Generating ingredients")).toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 

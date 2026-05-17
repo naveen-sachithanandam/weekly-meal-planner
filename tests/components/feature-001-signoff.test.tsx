@@ -15,6 +15,15 @@ import { MealPlanGrid } from "../../components/meal-plan-grid/meal-plan-grid";
 import { MealSlotCell } from "../../components/meal-plan-grid/meal-slot-cell/meal-slot-cell";
 import type { MealPlanDay, MealPlanResponse, MealPlanSlot } from "../../lib/types";
 import { DEFAULT_MEAL_TYPES, buildSlot, mealTypeByName } from "../helpers/meal-plan-fixtures";
+import { mealSlotExpandProps } from "../helpers/meal-slot-expand";
+
+function expandIngredients(mealName: string) {
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: new RegExp(`${mealName}, expand ingredients`, "i"),
+    }),
+  );
+}
 
 const mockUseSWR = vi.fn();
 
@@ -34,6 +43,7 @@ function buildDay(overrides: Partial<MealPlanDay> = {}): MealPlanDay {
 
 function SlotSaveHarness() {
   const [slot, setSlot] = useState<MealPlanSlot | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <MealSlotCell
@@ -41,6 +51,8 @@ function SlotSaveHarness() {
       mealType={mealTypeByName("Lunch")}
       date="2026-05-15"
       isPast={false}
+      isExpanded={isExpanded}
+      onToggleExpand={() => setIsExpanded((value) => !value)}
       onMutate={async () => {
         setSlot(
           buildSlot({
@@ -64,6 +76,7 @@ function SlotRenameHarness() {
       ingredients: [{ id: "ing-1", name: "Toor dal", approved: false }],
     }),
   );
+  const [isExpanded, setIsExpanded] = useState(true);
 
   return (
     <MealSlotCell
@@ -71,6 +84,8 @@ function SlotRenameHarness() {
       mealType={mealTypeByName("Lunch")}
       date="2026-05-15"
       isPast={false}
+      isExpanded={isExpanded}
+      onToggleExpand={() => setIsExpanded((value) => !value)}
       onMutate={async () => {
         setSlot(
           buildSlot({
@@ -141,6 +156,7 @@ describe("Feature 001 sign-off — AC-001 slot saves immediately on confirm", ()
         mealType={mealTypeByName("Lunch")}
         date="2026-05-15"
         isPast={false}
+        {...mealSlotExpandProps()}
         onMutate={onMutate}
       />,
     );
@@ -164,10 +180,12 @@ describe("Feature 001 sign-off — AC-001 slot saves immediately on confirm", ()
     fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Dal rice" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Dal rice, expand ingredients" }),
+      ).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent("Generating ingredients…");
+    expect(screen.getByLabelText("Generating ingredients")).toBeInTheDocument();
     expect(screen.queryByLabelText(/meal name/i)).not.toBeInTheDocument();
   });
 });
@@ -202,11 +220,13 @@ describe("Feature 001 sign-off — AC-002 ingredients populate asynchronously", 
     });
 
     render(
-      <DayColumn day={day} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+      <DayColumn day={day} mealTypes={DEFAULT_MEAL_TYPES} expandedSlotId={null} onToggleExpand={vi.fn()} onMutate={onMutate} />,
     );
 
-    expect(screen.getByRole("status")).toHaveTextContent("Generating ingredients…");
-    expect(screen.getByRole("button", { name: "Sambar rice" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Generating ingredients")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sambar rice, expand ingredients" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add meal/i })).toBeInTheDocument();
   });
 
@@ -223,6 +243,7 @@ describe("Feature 001 sign-off — AC-002 ingredients populate asynchronously", 
         mealType={mealTypeByName("Lunch")}
         date="2026-05-15"
         isPast={false}
+        {...mealSlotExpandProps(true)}
       />,
     );
 
@@ -243,6 +264,7 @@ describe("Feature 001 sign-off — AC-003 Ollama unavailable graceful degradatio
         mealType={mealTypeByName("Lunch")}
         date="2026-05-15"
         isPast={false}
+        {...mealSlotExpandProps(true)}
       />,
     );
 
@@ -257,6 +279,7 @@ describe("Feature 001 sign-off — AC-003 Ollama unavailable graceful degradatio
         mealType={mealTypeByName("Lunch")}
         date="2026-05-15"
         isPast={false}
+        {...mealSlotExpandProps(true)}
       />,
     );
 
@@ -280,6 +303,7 @@ describe("Feature 001 sign-off — AC-004 past days are read-only", () => {
         mealType={mealTypeByName("Lunch")}
         date="2026-05-10"
         isPast
+        {...mealSlotExpandProps()}
       />,
     );
 
@@ -297,6 +321,7 @@ describe("Feature 001 sign-off — AC-004 past days are read-only", () => {
         mealType={mealTypeByName("Breakfast")}
         date="2026-05-10"
         isPast
+        {...mealSlotExpandProps()}
       />,
     );
 
@@ -366,13 +391,19 @@ describe("Feature 001 sign-off — AC-005 week navigation", () => {
   it("retains each week's saved state when navigating back", () => {
     render(<MealPlanGrid />);
 
-    expect(screen.getByRole("button", { name: "Current week dal" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /current week dal, expand ingredients/i }),
+    ).toBeInTheDocument();
 
     fireEvent.click(weekNav().getByRole("button", { name: /previous week/i }));
-    expect(screen.getByRole("button", { name: "Last week soup" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /last week soup, expand ingredients/i }),
+    ).toBeInTheDocument();
 
     fireEvent.click(weekNav().getByRole("button", { name: /this week/i }));
-    expect(screen.getByRole("button", { name: "Current week dal" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /current week dal, expand ingredients/i }),
+    ).toBeInTheDocument();
   });
 
   it("disables chevrons at previous and next week boundaries", () => {
@@ -426,6 +457,8 @@ describe("Feature 001 sign-off — AC-006 toddler home day conflicts", () => {
       <DayColumn
         day={buildDay({ date: "2026-05-15" })}
         mealTypes={DEFAULT_MEAL_TYPES}
+        expandedSlotId={null}
+        onToggleExpand={vi.fn()}
         onMutate={onMutate}
       />,
     );
@@ -562,10 +595,12 @@ describe("Feature 001 sign-off — AC-008 meal rename re-runs Ollama", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Prawn masala" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Prawn masala, collapse ingredients" }),
+      ).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent("Generating ingredients…");
+    expect(screen.getByLabelText("Generating ingredients")).toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /approve toor dal/i })).not.toBeInTheDocument();
   });
 });

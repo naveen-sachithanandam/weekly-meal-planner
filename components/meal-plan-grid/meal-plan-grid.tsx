@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { getRefreshInterval } from "../../lib/meal-plan-refresh";
@@ -19,14 +19,23 @@ async function fetchMealPlan(url: string): Promise<MealPlanResponse> {
 
 export function MealPlanGrid() {
   const [weekOffset, setWeekOffset] = useState(0);
+  const [expandedSlotId, setExpandedSlotId] = useState<string | null>(null);
   const swrKey = `/api/meal-plan?offset=${weekOffset}`;
 
   const { data, error, isLoading, mutate } = useSWR(swrKey, fetchMealPlan, {
     refreshInterval: (latestData) => getRefreshInterval(latestData?.days),
   });
 
+  useEffect(() => {
+    setExpandedSlotId(null);
+  }, [weekOffset]);
+
   const canGoPrev = weekOffset > -1;
   const canGoNext = weekOffset < 1;
+
+  function handleToggleExpand(slotId: string) {
+    setExpandedSlotId((current) => (current === slotId ? null : slotId));
+  }
 
   return (
     <section>
@@ -39,8 +48,12 @@ export function MealPlanGrid() {
         canGoNext={canGoNext}
       />
 
-      {isLoading && <p>Loading meal plan…</p>}
-      {error && <p role="alert">Could not load meal plan.</p>}
+      {isLoading && <p className="text-sm text-muted">Loading meal plan…</p>}
+      {error && (
+        <p className="text-sm text-[var(--badge-warn-text)]" role="alert">
+          Could not load meal plan.
+        </p>
+      )}
 
       {data && (
         <div className="flex gap-2">
@@ -51,6 +64,8 @@ export function MealPlanGrid() {
                 key={day.date}
                 day={day}
                 mealTypes={data.mealTypes}
+                expandedSlotId={expandedSlotId}
+                onToggleExpand={handleToggleExpand}
                 onMutate={() => mutate()}
               />
             ))}

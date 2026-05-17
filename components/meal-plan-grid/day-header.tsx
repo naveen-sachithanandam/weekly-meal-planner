@@ -79,18 +79,18 @@ export function DayHeader({ date, isToddlerHome, isPast, onMutate }: DayHeaderPr
   return (
     <header
       data-testid="day-header"
-      className="mb-2 border-b border-gray-200 pb-2"
+      className="surface-card mb-2 px-2 py-2"
     >
-      <div className="flex flex-col gap-1">
-        <p className="text-sm font-semibold text-gray-900">{dayName}</p>
-        <p className="text-xs text-gray-600">{dateLabel}</p>
+      <div className="flex flex-col gap-0.5 text-center">
+        <p className="text-sm font-semibold">{dayName}</p>
+        <p className="text-xs text-muted">{dateLabel}</p>
       </div>
 
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
         {isToddlerHome && (
           <span
             data-testid="toddler-indicator"
-            className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900"
+            className="toddler-chip rounded px-1.5 py-0.5 text-xs font-medium"
           >
             Toddler home
           </span>
@@ -101,7 +101,7 @@ export function DayHeader({ date, isToddlerHome, isPast, onMutate }: DayHeaderPr
             type="button"
             aria-label={isToddlerHome ? "Mark toddler away" : "Mark toddler home"}
             onClick={() => void handleToggle()}
-            className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
+            className="btn-neutral px-2 py-0.5 text-xs"
           >
             {isToddlerHome ? "Toddler away" : "Toddler home"}
           </button>

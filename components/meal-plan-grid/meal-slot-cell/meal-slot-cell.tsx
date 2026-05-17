@@ -6,12 +6,15 @@ import type { MealPlanMealType, MealPlanSlot } from "../../../lib/types";
 import { MealSlotEditing } from "./meal-slot-editing";
 import { MealSlotEmpty } from "./meal-slot-empty";
 import { MealSlotFilled } from "./meal-slot-filled";
+import { MealSlotPast } from "./meal-slot-past";
 
 type MealSlotCellProps = {
   slot: MealPlanSlot | null;
   mealType: MealPlanMealType;
   date: string;
   isPast: boolean;
+  isExpanded: boolean;
+  onToggleExpand: (slotId: string) => void;
   onMutate?: () => void | Promise<unknown>;
 };
 
@@ -20,6 +23,8 @@ export function MealSlotCell({
   mealType,
   date,
   isPast,
+  isExpanded,
+  onToggleExpand,
   onMutate,
 }: MealSlotCellProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -39,9 +44,15 @@ export function MealSlotCell({
       className="min-h-12"
     >
       {isPast ? (
-        <p className="rounded border border-gray-200 px-2 py-2 text-xs text-gray-600">
-          {slot?.mealName ?? "—"}
-        </p>
+        slot === null ? (
+          <p className="surface-card px-2 py-2 text-center text-xs text-muted">—</p>
+        ) : (
+          <MealSlotPast
+            mealName={slot.mealName}
+            ingredientsStatus={slot.ingredientsStatus}
+            ingredients={slot.ingredients}
+          />
+        )
       ) : isEditing ? (
         <MealSlotEditing
           date={date}
@@ -60,6 +71,8 @@ export function MealSlotCell({
           mealName={slot.mealName}
           ingredientsStatus={slot.ingredientsStatus}
           ingredients={slot.ingredients}
+          isExpanded={isExpanded}
+          onToggleExpand={() => onToggleExpand(slot.id)}
           onStartEditing={onStartEditing}
           onMutate={onMutate}
         />

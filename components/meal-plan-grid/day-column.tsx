@@ -5,17 +5,23 @@ import { MealSlotCell } from "./meal-slot-cell/meal-slot-cell";
 type DayColumnProps = {
   day: MealPlanDay;
   mealTypes: MealPlanMealType[];
+  expandedSlotId: string | null;
+  onToggleExpand: (slotId: string) => void;
   onMutate: () => void | Promise<unknown>;
 };
 
-export function DayColumn({ day, mealTypes, onMutate }: DayColumnProps) {
+export function DayColumn({
+  day,
+  mealTypes,
+  expandedSlotId,
+  onToggleExpand,
+  onMutate,
+}: DayColumnProps) {
   return (
     <div
       data-testid="day-column"
       data-past={day.isPast}
-      className={`min-w-0 flex-1 flex flex-col gap-2 ${
-        day.isPast ? "opacity-50" : ""
-      }`}
+      className={`min-w-0 flex flex-1 flex-col gap-2 ${day.isPast ? "day-column-past" : ""}`}
     >
       <DayHeader
         date={day.date}
@@ -34,6 +40,8 @@ export function DayColumn({ day, mealTypes, onMutate }: DayColumnProps) {
             mealType={mealType}
             date={day.date}
             isPast={day.isPast}
+            isExpanded={slot !== null && expandedSlotId === slot.id}
+            onToggleExpand={onToggleExpand}
             onMutate={onMutate}
           />
         );
