@@ -11,8 +11,9 @@ in a single view — without switching screens, losing context,
 or rebuilding the plan from scratch each week.
 
 ### Success criteria
-1. A user can view the full 7-day grid (Breakfast, Lunch, Dinner)
-   for the current week in one screen load.
+1. A user can view the full 7-day grid for the current week in one
+   screen load. The number and names of meal rows are driven by the
+   household's active meal type configuration, not hardcoded.
 2. A user can assign, change, or clear any meal slot with inline
    editing directly on the grid cell.
 3. Family rules are enforced at entry — a slot that violates a
@@ -32,27 +33,31 @@ The following are explicitly out of scope for this feature:
    ingredient lists. They do not have cooking steps, timers,
    serving sizes, or nutritional data.
 
-2. **AI meal suggestions.** Ollama (local) suggests ingredients
+2. **Meal type configuration UI.** Managing meal types (adding, renaming,
+   reordering, deleting) is handled in Feature 002 — Configuration Page.
+   This feature only consumes the meal type configuration from the database.
+
+3. **AI meal suggestions.** Ollama (local) suggests ingredients
    for a meal the user has named. It does not suggest what meal
    to cook. The planning decision stays with the user.
 
-3. **Nutritional tracking.** No calorie counts, macros, or
+4. **Nutritional tracking.** No calorie counts, macros, or
    dietary scoring of any kind.
 
-4. **Editable past days.** Any day before today (yesterday and
+5. **Editable past days.** Any day before today (yesterday and
    earlier) is read-only. Today and all future days are editable.
 
-5. **History beyond the previous week.** Grid supports:
+6. **History beyond the previous week.** Grid supports:
    current week (editable), next week (editable, plan ahead),
    previous week (read-only, reference). Older history is out of scope.
 
-6. **More than one household.** Single-household app. No
+7. **More than one household.** Single-household app. No
    multi-tenancy, no login, no accounts.
 
-7. **Mobile-native experience.** Browser on home network only.
+8. **Mobile-native experience.** Browser on home network only.
    Not optimised for small screens or installed as a PWA.
 
-8. **Ollama blocking.** If Ollama is unavailable at meal entry
+9. **Ollama blocking.** If Ollama is unavailable at meal entry
    time, the slot saves with an empty ingredient list.
    The meal plan never blocks on AI availability.
 
@@ -112,11 +117,10 @@ Monday and Tuesday slots are visible but locked — greyed
 out, non-interactive.
 
 ### Journey 3 — Planning next week in advance
-It's Friday. The Planner navigates to next week's grid using either
-the WeekNav controls at the top or the prev/next arrows in the date
-column header — both produce the same result. All slots are empty
-and editable. They plan the full week. Returning to the current week
-view, nothing has changed. Both weeks hold their state independently.
+It's Friday. The Planner clicks the next week chevron on the weekly
+date range display (e.g. `‹  May 10 – May 16  ›`). The grid renders
+next week with all slots empty and editable. Returning to the current
+week view, nothing has changed. Both weeks hold their state independently.
 
 ### Journey 4 — Marking a toddler home day
 The Planner marks Monday next week as "toddler home" —
@@ -164,18 +168,13 @@ of time of day.
 
 ### AC-005 — Week navigation
 Given the user is on any week view
-When they navigate to next week or previous week
+When they click the prev or next chevron on the weekly date range display
 Then the grid renders the correct 7-day window starting Sunday
 And the navigated week retains its saved state
 And previous week slots are all read-only
-
-### AC-009 — Week navigation from date column header
-Given the user is viewing any week
-When they click the previous or next week control in the date column header
-Then the grid navigates to the previous or next week
-And the behaviour is identical to navigating via the WeekNav component
-And the previous week control is disabled when already on the oldest allowed week
-And the next week control is disabled when already on the newest allowed week (next week)
+And the weekly date range label updates to reflect the new week (e.g. `‹  May 17 – May 23  ›`)
+And the prev chevron is disabled when already on the oldest allowed week (previous week)
+And the next chevron is disabled when already on the newest allowed week (next week)
 
 ### AC-006 — Toddler home day flagging
 Given a future day already has meals planned
@@ -208,11 +207,18 @@ And the slot follows the same async ingredient flow as AC-001/002
 2. The database is SQLite via Prisma. It is always available
    when the app is running.
 
-3. The toddler's default schedule (daycare Mon–Fri, home
+3. Meal types (e.g. Breakfast, Lunch, Dinner) are stored in the
+   database as `MealTypeConfig` records, not hardcoded as an enum.
+   On first run, three defaults are seeded: Breakfast (order 1),
+   Lunch (order 2), Dinner (order 3). The household can add, rename,
+   reorder, or remove meal types via Feature 002 — Configuration Page.
+   This feature renders whatever active meal types the database contains.
+
+5. The toddler's default schedule (daycare Mon–Fri, home
    Sat–Sun) is hardcoded in the rules engine. Day-level
    overrides are stored in the database.
 
-4. "Toddler-appropriate" is a flag set by the user during
+6. "Toddler-appropriate" is a flag set by the user during
    meal confirmation. When a user confirms a meal name,
    the app asks: "Is this meal toddler-appropriate?" as
    part of the confirmation flow. The answer is stored
@@ -221,16 +227,16 @@ And the slot follows the same async ingredient flow as AC-001/002
    toddler-appropriate means for this household is defined
    in spec.local.md (gitignored).
 
-5. Both users (Planner and Shopper) access the app from
+7. Both users (Planner and Shopper) access the app from
    the same home network. No authentication is required.
 
-6. The home timezone is set once in app configuration and
+8. The home timezone is set once in app configuration and
    is the single source of truth for "today" and all day
    boundary calculations. Device timezone is ignored.
    This ensures both users always see the same day state
    regardless of which device they are on.
 
-7. Household cuisine for Ollama ingredient prompts is set via
+9. Household cuisine for Ollama ingredient prompts is set via
    the optional `CUISINE_CONTEXT` environment variable (e.g.
    `South Indian or Maharashtrian`). When unset, prompts are
    cuisine-agnostic. Cuisine strings must not be hardcoded in
@@ -242,12 +248,11 @@ And the slot follows the same async ingredient flow as AC-001/002
    gracefully when unavailable (see AC-003).
 
 2. **SQLite via Prisma** — persistence layer for meal
-   plan, ingredients, and toddler day overrides.
+   plan, ingredients, toddler day overrides, and meal type configuration.
 
-3. **Feature 002 — Family Rules Engine** — rules that
-   constrain slot validity (no eggs Saturday, easy day
-   flags, toddler-appropriate checks) are defined there.
-   This feature calls the rules engine but does not own it.
+3. **Feature 002 — Configuration Page** — owns the CRUD UI for
+   `MealTypeConfig` records. Feature 001 reads meal types from the DB
+   but does not provide the UI to manage them.
 
 4. **Feature 003 — Shopping List** — consumes the
    ingredient data produced by this feature. Ingredient

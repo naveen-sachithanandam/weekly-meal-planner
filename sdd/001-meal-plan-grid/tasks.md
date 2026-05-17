@@ -46,25 +46,34 @@ outside of `lib/config.ts`.
 
 ---
 
-## T002 — Prisma schema
+## T002 — Prisma schema + seed
 
 **Implements:** plan.md §1
-**Files:** `prisma/schema.prisma`
+**Files:** `prisma/schema.prisma`, `prisma/seed.ts`, `package.json`
 
-Add three models and two enums to the Prisma schema exactly as
-specified in plan.md §1: `MealSlot`, `Ingredient`, `ToddlerOverride`,
-`MealType` enum, `IngredientsStatus` enum.
+Add four models and one enum to the Prisma schema exactly as specified
+in plan.md §1: `MealTypeConfig`, `MealSlot`, `Ingredient`,
+`ToddlerOverride`, `IngredientsStatus` enum. There is no `MealType` enum —
+meal types are DB records, not an enum.
 
 Run `npx prisma migrate dev --name add-meal-planner` to create the
 migration. Run `npx prisma generate` to regenerate the client.
 
-**Done when:**
-- `prisma/schema.prisma` contains all three models and both enums.
-- Migration file exists under `prisma/migrations/`.
-- `npx prisma studio` opens and shows all three tables.
-- `@@unique([date, mealType])` constraint is present on `MealSlot`.
+Create `prisma/seed.ts` that inserts the three default meal types
+(Breakfast, Lunch, Dinner) using `skipDuplicates: true`. Configure it
+in `package.json` under `"prisma": { "seed": "ts-node prisma/seed.ts" }`.
+Run `npx prisma db seed` to verify.
 
-**Do not:** modify any existing models. Do not add fields not in the plan.
+**Done when:**
+- `prisma/schema.prisma` contains all four models and `IngredientsStatus` enum.
+- No `MealType` enum exists anywhere in the schema.
+- Migration file exists under `prisma/migrations/`.
+- `npx prisma studio` shows all four tables including `MealTypeConfig`.
+- `@@unique([date, mealTypeConfigId])` constraint is present on `MealSlot`.
+- `npx prisma db seed` inserts Breakfast/Lunch/Dinner without error.
+- Re-running seed does not create duplicates.
+
+**Do not:** use a `MealType` enum. Do not hardcode meal type strings in the schema.
 
 ---
 
@@ -131,13 +140,15 @@ Import `ToddlerOverride` type from `@prisma/client`.
 Create the route handler. Accept optional `week` query param (Sunday date,
 `YYYY-MM-DD`). If omitted, default to current week's Sunday via `getWeekStart()`.
 
-Fetch from Prisma:
-- All `MealSlot` records (with `ingredients`) where date falls in the 7-day
-  window from `weekStart` to `weekStart + 6 days`.
+Fetch from Prisma in a single query pass:
+- All active `MealTypeConfig` records ordered by `sortOrder` ascending.
+- All `MealSlot` records (with `mealTypeConfig` and `ingredients`) where
+  date falls in the 7-day window from `weekStart` to `weekStart + 6 days`.
 - All `ToddlerOverride` records for those 7 dates.
 
 Build and return the response shape from plan.md §2 exactly:
 - `weekStart` string
+- `mealTypes[]` — active meal types in sort order
 - `days[]` — one entry per day, with `date`, `isToddlerHome`, `isPast`, `slots[]`
 
 Use `isToddlerHome()` from `lib/toddler.ts`.
@@ -146,6 +157,7 @@ Use `isPastDay()` from `lib/date.ts`.
 **Done when:**
 - `GET /api/meal-plan` returns a valid JSON response for the current week.
 - `GET /api/meal-plan?week=2025-01-05` returns that specific week.
+- Response includes `mealTypes[]` with all active meal types in sort order.
 - Empty weeks return 7 days with empty `slots[]` arrays.
 - `isPast` is correctly set for past days.
 - `isToddlerHome` is correctly set for weekends.
@@ -161,14 +173,15 @@ data outside the response shape in plan.md §2.
 **Files:** `app/api/meal-slots/route.ts`, `lib/ollama.ts`
 
 Create the POST route handler:
-1. Validate the request body (`date`, `mealType`, `mealName`, `isToddlerAppropriate`).
+1. Validate the request body (`date`, `mealTypeConfigId`, `mealName`, `isToddlerAppropriate`).
 2. Reject with `403` if `date` is a past day.
-3. Reject with `409` if `[date, mealType]` already exists.
-4. Check if Ollama is reachable (simple GET to `${OLLAMA_HOST}`).
-5. Save the `MealSlot` with `ingredientsStatus: PENDING` (if Ollama reachable)
+3. Reject with `400` if `mealTypeConfigId` does not reference an active `MealTypeConfig`.
+4. Reject with `409` if `[date, mealTypeConfigId]` already exists.
+5. Check if Ollama is reachable (simple GET to `${OLLAMA_HOST}`).
+6. Save the `MealSlot` with `ingredientsStatus: PENDING` (if Ollama reachable)
    or `EMPTY` (if not).
-6. Return the saved slot immediately.
-7. After returning, fire `void generateIngredients(slot.id, slot.mealName)`
+7. Return the saved slot immediately.
+8. After returning, fire `void generateIngredients(slot.id, slot.mealName)`
    — defined in `lib/ollama.ts`.
 
 Create `lib/ollama.ts` with `generateIngredients(slotId, mealName)` exactly
@@ -180,7 +193,8 @@ to `FAILED`.
 **Done when:**
 - POST saves the slot and returns before Ollama responds.
 - A slot on a past day returns 403.
-- A duplicate `[date, mealType]` returns 409.
+- An invalid or inactive `mealTypeConfigId` returns 400.
+- A duplicate `[date, mealTypeConfigId]` returns 409.
 - When Ollama is running, `ingredientsStatus` eventually becomes `READY`
   and ingredients are populated.
 - When Ollama is stopped, slot saves with `ingredientsStatus: EMPTY`.
@@ -274,61 +288,55 @@ resolve. Re-POST with `force: true` to save despite conflicts.
 
 ## T011 — MealPlanGrid + WeekNav
 
-**Implements:** plan.md §3 — root component and week navigation
+**Implements:** plan.md §3 — root component and week navigation, spec AC-005
 **Files:** `components/meal-plan-grid/meal-plan-grid.tsx`,
            `components/meal-plan-grid/week-nav.tsx`
 
 Create `MealPlanGrid` as the root component:
-- Owns `weekOffset` state (number, default 0). This is the single source
-  of truth for week navigation — never duplicated in child components.
+- Owns `weekOffset` state (number, default 0).
 - Derives `weekStart` from `weekOffset` — call `GET /api/meal-plan?week=`
   via SWR, keyed by `weekStart`.
 - While any slot has `ingredientsStatus === 'PENDING'`, set SWR
   `refreshInterval` to 3000ms. Otherwise set to 0.
 - Renders `<WeekNav>` and 7 `<DayColumn>` components.
-- Passes the following props to each `<DayColumn>` (for DayHeader navigation):
-  - `onPrevWeek: () => void` — decrements weekOffset
-  - `onNextWeek: () => void` — increments weekOffset
-  - `canGoPrev: boolean` — false when `weekOffset === -1`
-  - `canGoNext: boolean` — false when `weekOffset === 1`
 
 Create `WeekNav`:
-- Previous week / current week / next week buttons.
-- Displays the week date range as a label.
-- Previous week button disabled when `weekOffset === -1`.
-- Next week button disabled when `weekOffset === 1`.
+- Renders the weekly date range as the primary navigation surface:
+  `‹  May 10 – May 16  ›`
+- `‹` (prev) and `›` (next) chevron buttons flank the date range string.
+- A separate "This week" button resets `weekOffset` to 0.
+- Prev chevron disabled when `weekOffset === -1` (oldest allowed week).
+- Next chevron disabled when `weekOffset === 1` (newest allowed week).
+- Date range string updates to reflect the current weekOffset.
 
 **Done when:**
 - Grid renders 7 columns for the current week.
-- Navigating to next/previous week fetches and renders the correct data.
-- Current week button returns to offset 0.
+- Clicking `‹` / `›` navigates to the correct week and updates the date range label.
+- "This week" returns to offset 0.
+- Prev chevron is disabled at `weekOffset === -1`; next at `weekOffset === 1`.
 - SWR polls every 3s when any slot is PENDING, stops when all resolved.
-- `onPrevWeek`, `onNextWeek`, `canGoPrev`, `canGoNext` are passed to each DayColumn.
 
 **Do not:** fetch data with `useEffect` + `fetch`. Use SWR only.
-**Do not:** own `weekOffset` state in DayColumn or DayHeader — pass callbacks only.
+**Do not:** put week navigation controls anywhere other than `WeekNav`.
 
 ---
 
 ## T012 — DayColumn + DayHeader
 
-**Implements:** plan.md §3 — day column and header, spec AC-009
+**Implements:** plan.md §3 — day column and header
 **Files:** `components/meal-plan-grid/day-column.tsx`,
            `components/meal-plan-grid/day-header.tsx`
 
 Create `DayColumn`:
-- Receives a `day` object (from the API response).
-- Receives and passes through navigation props from MealPlanGrid:
-  `onPrevWeek`, `onNextWeek`, `canGoPrev`, `canGoNext`.
-- Renders `<DayHeader>` (with all navigation props) and three
-  `<MealSlotCell>` components (BREAKFAST, LUNCH, DINNER).
+- Receives a `day` object and a `mealTypes[]` array (from the API response).
+- Renders `<DayHeader>` and one `<MealSlotCell>` per entry in `mealTypes[]`,
+  in sort order. Never hardcode BREAKFAST / LUNCH / DINNER.
+- Matches each `mealType` to the corresponding slot in `day.slots[]` by
+  `mealTypeConfigId` — renders empty state if no slot exists for that type.
 - If `day.isPast`, renders with a greyed-out style.
 
 Create `DayHeader`:
-- Displays the day name and date label.
-- Renders a previous week chevron (`‹`) and next week chevron (`›`)
-  alongside the date label — these call `onPrevWeek` / `onNextWeek`.
-- Chevrons are disabled (not hidden) when `canGoPrev` / `canGoNext` is false.
+- Displays the day name and date.
 - Shows a toddler indicator (small icon or label) when `isToddlerHome` is true.
 - Shows a toggle to mark/unmark the day as toddler home.
 - Toggle calls `POST /api/toddler-overrides`.
@@ -336,17 +344,15 @@ Create `DayHeader`:
   re-posting with `force: true`.
 
 **Done when:**
-- Each day column renders correctly for the week.
+- Each day column renders the correct number of meal rows based on `mealTypes[]`.
+- Adding a 4th meal type in the DB causes a 4th row to appear without code changes.
 - Past days are visually distinct (greyed out).
 - Toddler indicator appears on weekends and override days.
 - Toddler toggle calls the correct API route.
 - Conflict prompt appears and works before force-saving.
-- Prev/next chevrons appear in the date header and navigate weeks correctly.
-- Prev chevron is disabled when on the oldest allowed week.
-- Next chevron is disabled when on the newest allowed week (next week).
 
-**Do not:** own `weekOffset` state in DayHeader. Call the passed callbacks only.
-**Do not:** hide chevrons when disabled — disable them so the user understands the boundary.
+**Do not:** hardcode BREAKFAST / LUNCH / DINNER anywhere in this component.
+**Do not:** put any week navigation controls in DayHeader — navigation belongs in WeekNav only.
 
 ---
 
@@ -459,4 +465,4 @@ from `spec.md` manually:
 - [ ] AC-006 — Toddler home day flagging shows conflicts and prompts review
 - [ ] AC-007 — Sunday is always first column
 - [ ] AC-008 — Editing meal name discards ingredients and re-runs Ollama
-- [ ] AC-009 — Prev/next week chevrons in date column header navigate weeks; disabled at boundaries
+- [ ] AC-005 — Prev/next chevrons on WeekNav date range navigate weeks; disabled at boundaries

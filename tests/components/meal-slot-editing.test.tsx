@@ -24,7 +24,7 @@ describe("MealSlotEditing", () => {
     return render(
       <MealSlotEditing
         date="2026-05-15"
-        mealType="LUNCH"
+        mealTypeConfigId="cfg-lunch"
         onSaved={onSaved}
         onCancel={onCancel}
         {...overrides}
@@ -70,7 +70,7 @@ describe("MealSlotEditing", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: "2026-05-15",
-          mealType: "LUNCH",
+          mealTypeConfigId: "cfg-lunch",
           mealName: "Dal rice",
           isToddlerAppropriate: true,
         }),

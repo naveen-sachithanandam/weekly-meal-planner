@@ -4,14 +4,14 @@ import { useState } from "react";
 
 type MealSlotEditingProps = {
   date: string;
-  mealType: string;
+  mealTypeConfigId: string;
   onSaved: () => void | Promise<unknown>;
   onCancel: () => void;
 };
 
 export function MealSlotEditing({
   date,
-  mealType,
+  mealTypeConfigId,
   onSaved,
   onCancel,
 }: MealSlotEditingProps) {
@@ -37,7 +37,7 @@ export function MealSlotEditing({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date,
-          mealType,
+          mealTypeConfigId,
           mealName: trimmed,
           isToddlerAppropriate,
         }),

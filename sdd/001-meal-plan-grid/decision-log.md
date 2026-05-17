@@ -137,3 +137,22 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 - `POST /api/toddler-overrides` — `conflicts[]` entries use `{ slotId, mealType, mealName }` where `mealType` is `MealTypeConfig.name` (e.g. `"Lunch"`), not a `MealType` enum string.
 
 **Alternatives considered:** Rename conflict field to `mealTypeName` (rejected — plan §2 keeps the `mealType` key; only the value becomes the config name).
+
+---
+
+## DL-009 — Dynamic meal type rows in the grid UI
+
+**Date:** 2026-05-16  
+**Issues:** [#11](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/11), [#12](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/12)  
+**Status:** Resolved
+
+**Context:** T011/T012 require the grid to render meal rows from `GET /api/meal-plan` `mealTypes[]` (DL-006), not hardcoded `BREAKFAST` / `LUNCH` / `DINNER`. Week navigation belongs only in `WeekNav` (DL-004), with `weekOffset` owned by `MealPlanGrid` and SWR keyed on `?offset=` (DL-001).
+
+**Decision:**
+- `MealPlanGrid` passes `mealTypes` from the API response into each `DayColumn`.
+- `DayColumn` maps `mealTypes` in `sortOrder`, matching `day.slots[]` by `mealTypeConfigId`; missing slots render empty.
+- `MealSlotCell` receives `MealPlanMealType` and posts `mealTypeConfigId` when creating slots.
+- `WeekNav` shows `‹ May 10 – May 16, 2026 ›` with chevrons and a separate “This week” button; prev/next disabled at `weekOffset === -1` / `1`.
+- `DayHeader` shows date, toddler indicator, and toggle only — no week navigation.
+
+**Alternatives considered:** Hardcoded three-row layout (rejected — blocks Feature 002 configurable meal structure).

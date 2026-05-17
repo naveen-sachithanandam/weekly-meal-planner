@@ -27,21 +27,13 @@ export function MealPlanGrid() {
   const canGoPrev = weekOffset > -1;
   const canGoNext = weekOffset < 1;
 
-  const weekNavigation = {
-    onPrevWeek: () => setWeekOffset((offset) => Math.max(-1, offset - 1)),
-    onNextWeek: () => setWeekOffset((offset) => Math.min(1, offset + 1)),
-    canGoPrev,
-    canGoNext,
-  };
-
   return (
     <section>
       <WeekNav
         weekStart={data?.weekStart ?? ""}
-        weekOffset={weekOffset}
-        onPreviousWeek={weekNavigation.onPrevWeek}
+        onPreviousWeek={() => setWeekOffset((offset) => Math.max(-1, offset - 1))}
         onCurrentWeek={() => setWeekOffset(0)}
-        onNextWeek={weekNavigation.onNextWeek}
+        onNextWeek={() => setWeekOffset((offset) => Math.min(1, offset + 1))}
         canGoPrev={canGoPrev}
         canGoNext={canGoNext}
       />
@@ -54,8 +46,8 @@ export function MealPlanGrid() {
           <DayColumn
             key={day.date}
             day={day}
+            mealTypes={data.mealTypes}
             onMutate={() => mutate()}
-            {...weekNavigation}
           />
         ))}
       </div>

@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 
-import type { MealPlanSlot } from "../../../lib/types";
+import type { MealPlanMealType, MealPlanSlot } from "../../../lib/types";
 import { MealSlotEditing } from "./meal-slot-editing";
 import { MealSlotEmpty } from "./meal-slot-empty";
 import { MealSlotFilled } from "./meal-slot-filled";
 
 type MealSlotCellProps = {
   slot: MealPlanSlot | null;
-  mealType: string;
+  mealType: MealPlanMealType;
   date: string;
   isPast: boolean;
   onMutate?: () => void | Promise<unknown>;
@@ -30,7 +30,7 @@ export function MealSlotCell({
 
   return (
     <div
-      data-testid={`meal-slot-${mealType.toLowerCase()}`}
+      data-testid={`meal-slot-${mealType.name.toLowerCase()}`}
       data-date={date}
       data-past={isPast}
       className="min-h-12"
@@ -42,7 +42,7 @@ export function MealSlotCell({
       ) : isEditing ? (
         <MealSlotEditing
           date={date}
-          mealType={mealType}
+          mealTypeConfigId={mealType.id}
           onSaved={onSaved}
           onCancel={onCancel}
         />

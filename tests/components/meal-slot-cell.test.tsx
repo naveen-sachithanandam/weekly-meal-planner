@@ -4,19 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { MealSlotCell } from "../../components/meal-plan-grid/meal-slot-cell/meal-slot-cell";
-import type { MealPlanSlot } from "../../lib/types";
-
-function buildSlot(overrides: Partial<MealPlanSlot> = {}): MealPlanSlot {
-  return {
-    id: "slot-1",
-    mealType: "LUNCH",
-    mealName: "Sambar rice",
-    isToddlerAppropriate: true,
-    ingredientsStatus: "EMPTY",
-    ingredients: [],
-    ...overrides,
-  };
-}
+import { buildSlot, mealTypeByName } from "../helpers/meal-plan-fixtures";
 
 describe("MealSlotCell", () => {
   afterEach(() => {
@@ -27,7 +15,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={buildSlot()}
-        mealType="LUNCH"
+        mealType={mealTypeByName("LUNCH")}
         date="2026-05-10"
         isPast
       />,
@@ -43,7 +31,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={null}
-        mealType="BREAKFAST"
+        mealType={mealTypeByName("BREAKFAST")}
         date="2026-05-10"
         isPast
       />,
@@ -57,7 +45,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={null}
-        mealType="DINNER"
+        mealType={mealTypeByName("DINNER")}
         date="2026-05-12"
         isPast={false}
       />,
@@ -70,7 +58,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={null}
-        mealType="LUNCH"
+        mealType={mealTypeByName("LUNCH")}
         date="2026-05-12"
         isPast={false}
       />,
@@ -86,7 +74,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={buildSlot({ mealName: "Dal rice" })}
-        mealType="LUNCH"
+        mealType={mealTypeByName("LUNCH")}
         date="2026-05-12"
         isPast={false}
       />,
@@ -100,7 +88,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={buildSlot()}
-        mealType="LUNCH"
+        mealType={mealTypeByName("LUNCH")}
         date="2026-05-12"
         isPast={false}
       />,

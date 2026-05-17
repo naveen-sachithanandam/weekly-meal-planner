@@ -23,7 +23,15 @@ function buildWeekResponse(weekStart: string): MealPlanResponse {
     };
   });
 
-  return { weekStart, days };
+  return {
+    weekStart,
+    mealTypes: [
+      { id: "cfg-breakfast", name: "BREAKFAST", sortOrder: 1 },
+      { id: "cfg-lunch", name: "LUNCH", sortOrder: 2 },
+      { id: "cfg-dinner", name: "DINNER", sortOrder: 3 },
+    ],
+    days,
+  };
 }
 
 describe("MealPlanGrid", () => {
@@ -88,7 +96,7 @@ describe("MealPlanGrid", () => {
       expect.any(Object),
     );
 
-    fireEvent.click(weekNav().getByRole("button", { name: /current week/i }));
+    fireEvent.click(weekNav().getByRole("button", { name: /this week/i }));
 
     expect(mockUseSWR).toHaveBeenLastCalledWith(
       "/api/meal-plan?offset=0",
@@ -124,28 +132,14 @@ describe("MealPlanGrid", () => {
     );
 
     expect(weekNav().getByRole("button", { name: /next week/i })).toBeDisabled();
-
-    const headerNextButtons = screen.getAllByRole("button", {
-      name: /^next week$/i,
-    });
-    for (const button of headerNextButtons) {
-      expect(button).toBeDisabled();
-    }
   });
 
-  it("navigates via day header chevrons", () => {
+  it("shows the weekly date range between chevrons in WeekNav", () => {
     render(<MealPlanGrid />);
 
-    const headerNextButtons = screen.getAllByRole("button", {
-      name: /^next week$/i,
-    });
-    fireEvent.click(headerNextButtons[headerNextButtons.length - 1]!);
-
-    expect(mockUseSWR).toHaveBeenLastCalledWith(
-      "/api/meal-plan?offset=1",
-      expect.any(Function),
-      expect.any(Object),
-    );
+    expect(weekNav().getByText("May 10 – May 16, 2026")).toBeInTheDocument();
+    expect(screen.queryAllByRole("button", { name: /previous week/i })).toHaveLength(1);
+    expect(screen.queryAllByRole("button", { name: /next week/i })).toHaveLength(1);
   });
 
   it("sets SWR refreshInterval to 3000 when any slot is PENDING", () => {
@@ -157,7 +151,8 @@ describe("MealPlanGrid", () => {
       data.days[0].slots = [
         {
           id: "slot-1",
-          mealType: "LUNCH",
+          mealTypeConfigId: "cfg-lunch",
+          mealTypeName: "LUNCH",
           mealName: "Soup",
           isToddlerAppropriate: true,
           ingredientsStatus: "PENDING",
@@ -173,7 +168,8 @@ describe("MealPlanGrid", () => {
     pendingData.days[0].slots = [
       {
         id: "slot-1",
-        mealType: "LUNCH",
+        mealTypeConfigId: "cfg-lunch",
+        mealTypeName: "LUNCH",
         mealName: "Soup",
         isToddlerAppropriate: true,
         ingredientsStatus: "PENDING",

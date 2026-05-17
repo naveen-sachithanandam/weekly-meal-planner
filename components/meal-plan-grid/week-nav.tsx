@@ -2,7 +2,6 @@ import { addDays, format, isValid, parse } from "date-fns";
 
 type WeekNavProps = {
   weekStart: string;
-  weekOffset: number;
   onPreviousWeek: () => void;
   onCurrentWeek: () => void;
   onNextWeek: () => void;
@@ -26,44 +25,45 @@ export function formatWeekRange(weekStart: string): string {
 
 export function WeekNav({
   weekStart,
-  weekOffset,
   onPreviousWeek,
   onCurrentWeek,
   onNextWeek,
   canGoPrev,
   canGoNext,
 }: WeekNavProps) {
+  const rangeLabel = formatWeekRange(weekStart) || "Loading week…";
+
   return (
     <nav className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-2 text-sm text-gray-700">
+        <button
+          type="button"
+          aria-label="Previous week"
+          onClick={onPreviousWeek}
+          disabled={!canGoPrev}
+          className="rounded px-2 py-1 text-lg leading-none hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ‹
+        </button>
+        <span className="min-w-[10rem] text-center font-medium">{rangeLabel}</span>
+        <button
+          type="button"
+          aria-label="Next week"
+          onClick={onNextWeek}
+          disabled={!canGoNext}
+          className="rounded px-2 py-1 text-lg leading-none hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ›
+        </button>
+      </div>
       <button
         type="button"
-        aria-label="Previous week"
-        onClick={onPreviousWeek}
-        disabled={!canGoPrev}
-        className="rounded border px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Previous week
-      </button>
-      <button
-        type="button"
-        aria-label="Current week"
+        aria-label="This week"
         onClick={onCurrentWeek}
-        className="rounded border px-3 py-1"
+        className="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
       >
-        Current week
+        This week
       </button>
-      <button
-        type="button"
-        aria-label="Next week"
-        onClick={onNextWeek}
-        disabled={!canGoNext}
-        className="rounded border px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Next week
-      </button>
-      <p className="text-sm text-gray-700">
-        {formatWeekRange(weekStart) || "Loading week…"}
-      </p>
     </nav>
   );
 }

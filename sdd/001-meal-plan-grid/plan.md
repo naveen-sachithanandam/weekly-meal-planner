@@ -11,21 +11,31 @@ reflected here or in the spec.
 
 ## 1. Data Model
 
-Three new Prisma models. Add to `prisma/schema.prisma`.
+Four new Prisma models. Add to `prisma/schema.prisma`.
 
 ```prisma
-model MealSlot {
-  id                  String             @id @default(cuid())
-  date                String             // YYYY-MM-DD in home timezone
-  mealType            MealType
-  mealName            String
-  isToddlerAppropriate Boolean           @default(false)
-  ingredientsStatus   IngredientsStatus  @default(PENDING)
-  ingredients         Ingredient[]
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+model MealTypeConfig {
+  id        String     @id @default(cuid())
+  name      String     @unique   // "Breakfast", "Lunch", "Dinner", "Supper", etc.
+  sortOrder Int                  // determines row order in the grid; lower = higher
+  isActive  Boolean    @default(true)  // soft-delete; inactive types hidden from grid
+  slots     MealSlot[]
+  createdAt DateTime   @default(now())
+}
 
-  @@unique([date, mealType])
+model MealSlot {
+  id                   String           @id @default(cuid())
+  date                 String           // YYYY-MM-DD in home timezone
+  mealTypeConfigId     String
+  mealTypeConfig       MealTypeConfig   @relation(fields: [mealTypeConfigId], references: [id])
+  mealName             String
+  isToddlerAppropriate Boolean          @default(false)
+  ingredientsStatus    IngredientsStatus @default(PENDING)
+  ingredients          Ingredient[]
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@unique([date, mealTypeConfigId])
 }
 
 model Ingredient {
@@ -42,12 +52,6 @@ model ToddlerOverride {
   isHome Boolean
 }
 
-enum MealType {
-  BREAKFAST
-  LUNCH
-  DINNER
-}
-
 enum IngredientsStatus {
   PENDING  // Ollama has been called, waiting for response
   READY    // Ingredients returned and stored
@@ -57,9 +61,27 @@ enum IngredientsStatus {
 ```
 
 **Design decisions:**
-- `date` is stored as a `String` (`YYYY-MM-DD`) — not a `DateTime`. This avoids timezone drift when reading back from SQLite. The home timezone is applied at the API layer, not the DB layer.
-- `@@unique([date, mealType])` — one slot per meal type per day. Enforced at the DB level.
+- `MealType` enum is removed. Meal types are DB records, not compile-time constants. This allows the household to configure their own meal structure without a code change.
+- `MealTypeConfig.isActive` — soft-delete only. A meal type with existing `MealSlot` records cannot be hard-deleted without orphaning data. Mark inactive instead.
+- `MealTypeConfig.sortOrder` — integer, not an enum position. Gaps are fine (`1, 2, 10`). The grid renders meal type rows in ascending `sortOrder`. Managed by Feature 002.
+- `date` is stored as a `String` (`YYYY-MM-DD`) — not a `DateTime`. Avoids timezone drift when reading back from SQLite.
+- `@@unique([date, mealTypeConfigId])` — one slot per meal type per day. Enforced at DB level.
 - `Ingredient.approved` — tracks whether the user has reviewed and approved each ingredient before it flows to the shopping list (Feature 003).
+
+**Seed data:** On first run, `prisma/seed.ts` inserts three default `MealTypeConfig` records if none exist:
+
+```typescript
+await prisma.mealTypeConfig.createMany({
+  skipDuplicates: true,
+  data: [
+    { name: 'Breakfast', sortOrder: 1 },
+    { name: 'Lunch',     sortOrder: 2 },
+    { name: 'Dinner',    sortOrder: 3 },
+  ],
+})
+```
+
+Run with `npx prisma db seed` (configured in `package.json`). Safe to re-run — `skipDuplicates` prevents double-insertion.
 
 ---
 
@@ -78,6 +100,11 @@ Fetch all meal slots for a given week.
 ```json
 {
   "weekStart": "2025-01-05",
+  "mealTypes": [
+    { "id": "clx...", "name": "Breakfast", "sortOrder": 1 },
+    { "id": "clx...", "name": "Lunch",     "sortOrder": 2 },
+    { "id": "clx...", "name": "Dinner",    "sortOrder": 3 }
+  ],
   "days": [
     {
       "date": "2025-01-05",
@@ -86,14 +113,15 @@ Fetch all meal slots for a given week.
       "slots": [
         {
           "id": "clx...",
-          "mealType": "BREAKFAST",
+          "mealTypeConfigId": "clx...",
+          "mealTypeName": "Breakfast",
           "mealName": "Idli",
           "isToddlerAppropriate": true,
           "ingredientsStatus": "READY",
           "ingredients": [
             { "id": "clx...", "name": "Idli rice", "approved": true },
-            { "id": "clx...", "name": "Urad dal", "approved": true },
-            { "id": "clx...", "name": "Salt", "approved": true }
+            { "id": "clx...", "name": "Urad dal",  "approved": true },
+            { "id": "clx...", "name": "Salt",       "approved": true }
           ]
         }
       ]
@@ -102,7 +130,8 @@ Fetch all meal slots for a given week.
 }
 ```
 
-`isToddlerHome` — derived: true if day is Saturday/Sunday, OR if a `ToddlerOverride` record exists for that date with `isHome: true`, OR if a weekday override exists.
+`mealTypes` — the active `MealTypeConfig` records in `sortOrder` ascending. The UI uses this array to render the correct number of meal rows for each day column.
+`isToddlerHome` — derived: true if day is Saturday/Sunday, OR if a `ToddlerOverride` record exists for that date with `isHome: true`.
 `isPast` — derived at the API layer using home timezone. True if date is before today.
 
 ---
@@ -115,9 +144,9 @@ Save a new meal slot immediately (before Ollama responds).
 ```json
 {
   "date": "2025-01-07",
-  "mealType": "DINNER",
-  "mealName": "Chicken Kolhapuri",
-  "isToddlerAppropriate": false
+  "mealTypeConfigId": "clx...",
+  "mealName": "Sambar rice",
+  "isToddlerAppropriate": true
 }
 ```
 
@@ -127,7 +156,8 @@ Save a new meal slot immediately (before Ollama responds).
 
 **Validation:**
 - `date` must not be a past day (before today in home timezone). Returns `403` if attempted.
-- `[date, mealType]` must not already exist. Returns `409` if conflict.
+- `mealTypeConfigId` must reference an active `MealTypeConfig`. Returns `400` if not found or inactive.
+- `[date, mealTypeConfigId]` must not already exist. Returns `409` if conflict.
 
 ---
 
@@ -211,14 +241,12 @@ app/
 
 components/
 ├── meal-plan-grid/
-│   ├── meal-plan-grid.tsx          ← root: fetches week data via SWR, owns week navigation state;
-│   │                                  passes onPrevWeek / onNextWeek / canGoPrev / canGoNext
-│   │                                  down to DayColumn (and on to DayHeader)
-│   ├── week-nav.tsx                ← prev / current / next week buttons + week label
-│   ├── day-column.tsx              ← one column per day; receives day data + navigation callbacks;
-│   │                                  passes navigation callbacks through to DayHeader
-│   ├── day-header.tsx              ← date label, toddler indicator, toddler override toggle;
-│   │                                  ALSO renders prev/next week chevrons using navigation callbacks
+│   ├── meal-plan-grid.tsx          ← root: fetches week data via SWR, owns week navigation state
+│   ├── week-nav.tsx                ← weekly date range display with integrated prev/next chevrons
+│   │                                  e.g. ‹  May 10 – May 16  › plus a "this week" reset button
+│   ├── day-column.tsx              ← one column per day; receives day data + mealTypes array;
+│   │                                  renders header + one MealSlotCell per active meal type
+│   ├── day-header.tsx              ← date label, toddler indicator, toddler override toggle
 │   └── meal-slot-cell/
 │       ├── meal-slot-cell.tsx      ← orchestrates empty / editing / filled states
 │       ├── meal-slot-empty.tsx     ← click-to-edit empty state
@@ -229,23 +257,11 @@ components/
 ```
 
 **State ownership:**
-- Week offset (0 = current, 1 = next, -1 = previous) — local state in `meal-plan-grid.tsx`. This is the single source of truth for week navigation — never duplicated in child components.
+- Week offset (0 = current, 1 = next, -1 = previous) — local state in `meal-plan-grid.tsx`.
 - Week data (slots, toddler overrides, isPast flags) — SWR cache, keyed by week Sunday date.
 - Editing state (which cell is open) — local state in `meal-slot-cell.tsx`.
 
-**Navigation prop drilling — `meal-plan-grid.tsx` → `day-column.tsx` → `day-header.tsx`:**
-
-```typescript
-// Props passed from MealPlanGrid down to DayColumn and DayHeader
-type WeekNavProps = {
-  onPrevWeek: () => void
-  onNextWeek: () => void
-  canGoPrev: boolean   // false when weekOffset === -1 (previous week — oldest allowed)
-  canGoNext: boolean   // false when weekOffset === 1 (next week — newest allowed)
-}
-```
-
-`DayHeader` renders small chevron buttons (`‹` / `›`) alongside the date label. These call `onPrevWeek` / `onNextWeek` directly. The chevrons are disabled (not just hidden) when `canGoPrev` / `canGoNext` is false — same boundary rules as `WeekNav`.
+**WeekNav layout:** The weekly date range label is the primary navigation surface. Prev (`‹`) and next (`›`) chevrons sit on either side of the date range string. A separate "This week" button resets `weekOffset` to 0. Prev chevron disabled when `weekOffset === -1`. Next chevron disabled when `weekOffset === 1`.
 
 **SWR polling:** While any slot in the current week has `ingredientsStatus === "PENDING"`, SWR refreshes every 3 seconds. Polling stops when all slots are `READY`, `FAILED`, or `EMPTY`.
 

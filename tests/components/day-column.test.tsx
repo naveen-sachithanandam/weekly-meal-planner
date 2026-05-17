@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DayColumn } from "../../components/meal-plan-grid/day-column";
 import type { MealPlanDay } from "../../lib/types";
+import { DEFAULT_MEAL_TYPES, buildSlot } from "../helpers/meal-plan-fixtures";
 
 function buildDay(overrides: Partial<MealPlanDay> = {}): MealPlanDay {
   return {
@@ -32,7 +33,11 @@ describe("DayColumn", () => {
 
   it("renders day header with day name and formatted date", () => {
     render(
-      <DayColumn day={buildDay({ date: "2026-05-12" })} onMutate={onMutate} />,
+      <DayColumn
+        day={buildDay({ date: "2026-05-12" })}
+        mealTypes={DEFAULT_MEAL_TYPES}
+        onMutate={onMutate}
+      />,
     );
 
     expect(screen.getByTestId("day-header")).toBeInTheDocument();
@@ -41,7 +46,9 @@ describe("DayColumn", () => {
   });
 
   it("renders three meal slot cells for breakfast, lunch, and dinner", () => {
-    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
+    render(
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+    );
 
     expect(screen.getByTestId("meal-slot-breakfast")).toBeInTheDocument();
     expect(screen.getByTestId("meal-slot-lunch")).toBeInTheDocument();
@@ -50,25 +57,24 @@ describe("DayColumn", () => {
 
   it("passes slot data to meal slot cells", () => {
     const day = buildDay({
-      slots: [
-        {
-          id: "slot-1",
-          mealType: "LUNCH",
-          mealName: "Sambar rice",
-          isToddlerAppropriate: true,
-          ingredientsStatus: "EMPTY",
-          ingredients: [],
-        },
-      ],
+      slots: [buildSlot({ mealTypeConfigId: "cfg-lunch", mealTypeName: "LUNCH" })],
     });
 
-    render(<DayColumn day={day} onMutate={onMutate} />);
+    render(
+      <DayColumn day={day} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+    );
 
     expect(screen.getByTestId("meal-slot-lunch")).toHaveTextContent("Sambar rice");
   });
 
   it("applies greyed-out styling for past days", () => {
-    render(<DayColumn day={buildDay({ isPast: true })} onMutate={onMutate} />);
+    render(
+      <DayColumn
+        day={buildDay({ isPast: true })}
+        mealTypes={DEFAULT_MEAL_TYPES}
+        onMutate={onMutate}
+      />,
+    );
 
     const column = screen.getByTestId("day-column");
     expect(column).toHaveAttribute("data-past", "true");
@@ -76,13 +82,25 @@ describe("DayColumn", () => {
   });
 
   it("shows toddler indicator when toddler is home", () => {
-    render(<DayColumn day={buildDay({ isToddlerHome: true })} onMutate={onMutate} />);
+    render(
+      <DayColumn
+        day={buildDay({ isToddlerHome: true })}
+        mealTypes={DEFAULT_MEAL_TYPES}
+        onMutate={onMutate}
+      />,
+    );
 
     expect(screen.getByTestId("toddler-indicator")).toHaveTextContent("Toddler home");
   });
 
   it("hides toddler toggle on past days", () => {
-    render(<DayColumn day={buildDay({ isPast: true })} onMutate={onMutate} />);
+    render(
+      <DayColumn
+        day={buildDay({ isPast: true })}
+        mealTypes={DEFAULT_MEAL_TYPES}
+        onMutate={onMutate}
+      />,
+    );
 
     expect(screen.queryByRole("button", { name: /mark toddler/i })).not.toBeInTheDocument();
   });
@@ -97,7 +115,9 @@ describe("DayColumn", () => {
       }),
     } as Response);
 
-    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
+    render(
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
 
@@ -122,7 +142,7 @@ describe("DayColumn", () => {
         json: async () => ({
           override: { date: "2026-05-12", isHome: true },
           conflicts: [
-            { slotId: "slot-1", mealTypeName: "Lunch", mealName: "Misal pav" },
+            { slotId: "slot-1", mealType: "Lunch", mealName: "Misal pav" },
           ],
         }),
       } as Response)
@@ -134,7 +154,9 @@ describe("DayColumn", () => {
         }),
       } as Response);
 
-    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
+    render(
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
 
@@ -166,12 +188,14 @@ describe("DayColumn", () => {
       json: async () => ({
         override: { date: "2026-05-12", isHome: true },
         conflicts: [
-          { slotId: "slot-1", mealTypeName: "Lunch", mealName: "Misal pav" },
+          { slotId: "slot-1", mealType: "Lunch", mealName: "Misal pav" },
         ],
       }),
     } as Response);
 
-    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
+    render(
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
 
@@ -183,8 +207,23 @@ describe("DayColumn", () => {
     expect(onMutate).not.toHaveBeenCalled();
   });
 
+  it("renders a fourth row when mealTypes includes a fourth type", () => {
+    const mealTypes = [
+      ...DEFAULT_MEAL_TYPES,
+      { id: "cfg-supper", name: "SUPPER", sortOrder: 4 },
+    ];
+
+    render(
+      <DayColumn day={buildDay()} mealTypes={mealTypes} onMutate={onMutate} />,
+    );
+
+    expect(screen.getByTestId("meal-slot-supper")).toBeInTheDocument();
+  });
+
   it("does not render week navigation controls", () => {
-    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
+    render(
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+    );
 
     expect(screen.queryByRole("button", { name: /previous week/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /next week/i })).not.toBeInTheDocument();
@@ -201,7 +240,11 @@ describe("DayColumn", () => {
     } as Response);
 
     render(
-      <DayColumn day={buildDay({ isToddlerHome: true })} onMutate={onMutate} />,
+      <DayColumn
+        day={buildDay({ isToddlerHome: true })}
+        mealTypes={DEFAULT_MEAL_TYPES}
+        onMutate={onMutate}
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler away/i }));
