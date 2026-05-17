@@ -34,7 +34,7 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 
 **Date:** 2026-05-16  
 **Issues:** [#11](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/11), [#12](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/12)  
-**Status:** Resolved
+**Status:** Superseded (see DL-004)
 
 **Context:** Spec/plan/tasks updated for AC-009: prev/next week chevrons in each `DayHeader`, with navigation callbacks drilled from `MealPlanGrid` (single `weekOffset` source of truth). Next week must be disabled at `weekOffset === 1` (not only previous at `-1`).
 
@@ -47,4 +47,40 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 
 **Alternatives considered:** Local `weekOffset` in `DayHeader` (rejected — duplicates state).
 
-**Resolution:** Implemented in T011/T012 reopen — `WeekNavigationProps` drilled from `MealPlanGrid`; chevrons in `DayHeader`; `canGoNext` false at `weekOffset === 1`. Issues [#11](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/11), [#12](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/12).
+**Resolution:** Superseded by DL-004 — initial implementation used column-header chevrons (AC-009); spec was revised to WeekNav-only navigation.
+
+---
+
+## DL-004 — Week navigation consolidated in WeekNav (AC-005 revision)
+
+**Date:** 2026-05-16  
+**Issues:** [#11](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/11), [#12](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/12)  
+**Status:** Resolved
+
+**Context:** Spec/tasks revised: week navigation belongs only in `WeekNav`, not in `DayHeader`. UI is integrated chevrons flanking the date range (`‹ May 10 – May 16, 2026 ›`) plus a separate “This week” reset button.
+
+**Decision:**
+- Remove navigation props and chevrons from `DayHeader` / `DayColumn`.
+- `WeekNav` is the sole navigation surface with prev/next chevrons beside the range label.
+- `weekOffset` remains only in `MealPlanGrid`; boundaries unchanged (`-1` / `+1`).
+- SWR continues `?offset=` (DL-001).
+
+**Alternatives considered:** Dual navigation in WeekNav and DayHeader (rejected per revised spec).
+
+---
+
+## DL-005 — MealType enum replaced by MealTypeConfig model
+
+**Date:** 2026-05-16  
+**Issue:** T002 update — MealTypeConfig schema  
+**Status:** Resolved
+
+**Context:** The initial T002 migration used a `MealType` enum (`BREAKFAST`, `LUNCH`, `DINNER`) on `MealSlot`. The plan and spec require meal types as database records so households can configure structure without code changes (Feature 002).
+
+**Decision:**
+- Remove the `MealType` enum entirely.
+- Add `MealTypeConfig` (`name` unique, `sortOrder`, `isActive`) with a one-to-many relation to `MealSlot`.
+- `MealSlot` references `mealTypeConfigId`; enforce `@@unique([date, mealTypeConfigId])`.
+- Seed Breakfast / Lunch / Dinner via `prisma/seed.ts` with idempotent `upsert` per name (SQLite does not support `createMany({ skipDuplicates: true })`).
+
+**Alternatives considered:** Keep enum for defaults and add config later (rejected — duplicates source of truth and blocks configurable meal rows).

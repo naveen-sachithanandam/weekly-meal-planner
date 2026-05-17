@@ -1,49 +1,23 @@
-import { MealType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { isPastDay } from "../../../lib/date";
 import { generateIngredients, isOllamaReachable } from "../../../lib/ollama";
 import { prisma } from "../../../lib/prisma";
-
-const MEAL_TYPES = new Set<string>(Object.values(MealType));
+import { mealSlotInclude, serializeMealSlot } from "../../../lib/serialize-meal-slot";
 
 type CreateMealSlotBody = {
   date?: string;
-  mealType?: string;
+  mealTypeConfigId?: string;
   mealName?: string;
   isToddlerAppropriate?: boolean;
 };
-
-function serializeSlot(slot: {
-  id: string;
-  date: string;
-  mealType: MealType;
-  mealName: string;
-  isToddlerAppropriate: boolean;
-  ingredientsStatus: string;
-  ingredients: { id: string; name: string; approved: boolean }[];
-}) {
-  return {
-    id: slot.id,
-    date: slot.date,
-    mealType: slot.mealType,
-    mealName: slot.mealName,
-    isToddlerAppropriate: slot.isToddlerAppropriate,
-    ingredientsStatus: slot.ingredientsStatus,
-    ingredients: slot.ingredients.map((ingredient) => ({
-      id: ingredient.id,
-      name: ingredient.name,
-      approved: ingredient.approved,
-    })),
-  };
-}
 
 function validateBody(body: CreateMealSlotBody): string | null {
   if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
     return "date must be YYYY-MM-DD";
   }
-  if (!body.mealType || !MEAL_TYPES.has(body.mealType)) {
-    return "mealType must be BREAKFAST, LUNCH, or DINNER";
+  if (!body.mealTypeConfigId?.trim()) {
+    return "mealTypeConfigId is required";
   }
   if (!body.mealName?.trim()) {
     return "mealName is required";
@@ -62,7 +36,7 @@ export async function POST(request: NextRequest) {
   }
 
   const date = body.date!;
-  const mealType = body.mealType as MealType;
+  const mealTypeConfigId = body.mealTypeConfigId!.trim();
   const mealName = body.mealName!.trim();
   const isToddlerAppropriate = body.isToddlerAppropriate!;
 
@@ -73,8 +47,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const mealTypeConfig = await prisma.mealTypeConfig.findFirst({
+    where: { id: mealTypeConfigId, isActive: true },
+  });
+  if (!mealTypeConfig) {
+    return NextResponse.json(
+      { error: "mealTypeConfigId must reference an active meal type" },
+      { status: 400 },
+    );
+  }
+
   const existing = await prisma.mealSlot.findUnique({
-    where: { date_mealType: { date, mealType } },
+    where: {
+      date_mealTypeConfigId: { date, mealTypeConfigId },
+    },
   });
   if (existing) {
     return NextResponse.json(
@@ -89,17 +75,17 @@ export async function POST(request: NextRequest) {
   const slot = await prisma.mealSlot.create({
     data: {
       date,
-      mealType,
+      mealTypeConfigId,
       mealName,
       isToddlerAppropriate,
       ingredientsStatus,
     },
-    include: { ingredients: true },
+    include: mealSlotInclude,
   });
 
   if (ollamaReachable) {
     void generateIngredients(slot.id, slot.mealName);
   }
 
-  return NextResponse.json(serializeSlot(slot), { status: 201 });
+  return NextResponse.json(serializeMealSlot(slot), { status: 201 });
 }

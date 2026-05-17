@@ -1,7 +1,7 @@
-import { MealType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "../../../../../lib/prisma";
+import { mealSlotInclude, serializeMealSlot } from "../../../../../lib/serialize-meal-slot";
 
 type IngredientInput = {
   id?: string;
@@ -12,30 +12,6 @@ type IngredientInput = {
 type UpdateIngredientsBody = {
   ingredients?: IngredientInput[];
 };
-
-function serializeSlot(slot: {
-  id: string;
-  date: string;
-  mealType: MealType;
-  mealName: string;
-  isToddlerAppropriate: boolean;
-  ingredientsStatus: string;
-  ingredients: { id: string; name: string; approved: boolean }[];
-}) {
-  return {
-    id: slot.id,
-    date: slot.date,
-    mealType: slot.mealType,
-    mealName: slot.mealName,
-    isToddlerAppropriate: slot.isToddlerAppropriate,
-    ingredientsStatus: slot.ingredientsStatus,
-    ingredients: slot.ingredients.map((ingredient) => ({
-      id: ingredient.id,
-      name: ingredient.name,
-      approved: ingredient.approved,
-    })),
-  };
-}
 
 function validateIngredients(
   ingredients: IngredientInput[] | undefined,
@@ -87,8 +63,8 @@ export async function PATCH(
         })),
       },
     },
-    include: { ingredients: true },
+    include: mealSlotInclude,
   });
 
-  return NextResponse.json(serializeSlot(slot));
+  return NextResponse.json(serializeMealSlot(slot));
 }

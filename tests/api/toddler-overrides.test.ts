@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { applyValidEnv, clearConfigEnv } from "../helpers/env";
+import { getLegacyMealTypeConfigId } from "../helpers/meal-type-config";
 import { getTestPrisma, resetTestDatabase } from "../helpers/prisma";
 
 /** Thursday 2026-05-14 in America/Toronto */
@@ -55,10 +56,11 @@ describe("POST /api/toddler-overrides", () => {
 
   it("returns conflicts without saving when isHome is true and meals are not toddler-appropriate", async () => {
     const prisma = getTestPrisma();
+    const lunchId = await getLegacyMealTypeConfigId(prisma, "LUNCH");
     const slot = await prisma.mealSlot.create({
       data: {
         date: "2026-05-15",
-        mealType: "LUNCH",
+        mealTypeConfigId: lunchId,
         mealName: "Misal pav",
         isToddlerAppropriate: false,
         ingredientsStatus: "EMPTY",
@@ -77,7 +79,7 @@ describe("POST /api/toddler-overrides", () => {
       conflicts: [
         {
           slotId: slot.id,
-          mealType: "LUNCH",
+          mealTypeName: "Lunch",
           mealName: "Misal pav",
         },
       ],
@@ -91,10 +93,11 @@ describe("POST /api/toddler-overrides", () => {
 
   it("saves the override when force is true despite conflicts", async () => {
     const prisma = getTestPrisma();
+    const dinnerId = await getLegacyMealTypeConfigId(prisma, "DINNER");
     await prisma.mealSlot.create({
       data: {
         date: "2026-05-15",
-        mealType: "DINNER",
+        mealTypeConfigId: dinnerId,
         mealName: "Prawn masala",
         isToddlerAppropriate: false,
         ingredientsStatus: "EMPTY",
@@ -122,10 +125,11 @@ describe("POST /api/toddler-overrides", () => {
 
   it("does not check conflicts when isHome is false", async () => {
     const prisma = getTestPrisma();
+    const lunchId = await getLegacyMealTypeConfigId(prisma, "LUNCH");
     await prisma.mealSlot.create({
       data: {
         date: "2026-05-12",
-        mealType: "LUNCH",
+        mealTypeConfigId: lunchId,
         mealName: "Misal pav",
         isToddlerAppropriate: false,
         ingredientsStatus: "EMPTY",

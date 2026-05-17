@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
 import { VALID_ENV } from "./env";
+import { seedDefaultMealTypeConfigs } from "./meal-type-config";
 
 let client: PrismaClient | undefined;
 
@@ -17,4 +18,6 @@ export async function resetTestDatabase() {
   await prisma.ingredient.deleteMany();
   await prisma.mealSlot.deleteMany();
   await prisma.toddlerOverride.deleteMany();
+  await prisma.mealTypeConfig.deleteMany();
+  await seedDefaultMealTypeConfigs(prisma);
 }

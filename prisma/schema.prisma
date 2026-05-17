@@ -7,10 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model MealTypeConfig {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  sortOrder Int
+  isActive  Boolean    @default(true)
+  slots     MealSlot[]
+  createdAt DateTime   @default(now())
+}
+
 model MealSlot {
   id                   String            @id @default(cuid())
   date                 String // YYYY-MM-DD in home timezone
-  mealType             MealType
+  mealTypeConfigId     String
+  mealTypeConfig       MealTypeConfig    @relation(fields: [mealTypeConfigId], references: [id])
   mealName             String
   isToddlerAppropriate Boolean           @default(false)
   ingredientsStatus    IngredientsStatus @default(PENDING)
@@ -18,7 +28,7 @@ model MealSlot {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
-  @@unique([date, mealType])
+  @@unique([date, mealTypeConfigId])
 }
 
 model Ingredient {
@@ -33,12 +43,6 @@ model ToddlerOverride {
   id     String  @id @default(cuid())
   date   String  @unique // YYYY-MM-DD in home timezone
   isHome Boolean
-}
-
-enum MealType {
-  BREAKFAST
-  LUNCH
-  DINNER
 }
 
 enum IngredientsStatus {

@@ -20,6 +20,9 @@
     "react-dom": "^19.2.6",
     "swr": "^2.4.1"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",
     "@testing-library/jest-dom": "^6.9.1",

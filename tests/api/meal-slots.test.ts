@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { VALID_ENV, applyValidEnv, clearConfigEnv } from "../helpers/env";
+import { getLegacyMealTypeConfigId } from "../helpers/meal-type-config";
 import { getTestPrisma, resetTestDatabase } from "../helpers/prisma";
 
 /** Thursday 2026-05-14 in America/Toronto */
@@ -15,6 +16,17 @@ async function postMealSlot(body: Record<string, unknown>) {
     body: JSON.stringify(body),
   });
   return POST(request);
+}
+
+async function postLegacyMealSlot(
+  mealType: "BREAKFAST" | "LUNCH" | "DINNER",
+  body: Omit<Record<string, unknown>, "mealTypeConfigId" | "mealType">,
+) {
+  const prisma = getTestPrisma();
+  return postMealSlot({
+    ...body,
+    mealTypeConfigId: await getLegacyMealTypeConfigId(prisma, mealType),
+  });
 }
 
 function mockOllamaUnreachable() {
@@ -70,9 +82,8 @@ describe("POST /api/meal-slots", () => {
   });
 
   it("saves a new meal slot for today when Ollama is unavailable", async () => {
-    const response = await postMealSlot({
+    const response = await postLegacyMealSlot("DINNER", {
       date: "2026-05-14",
-      mealType: "DINNER",
       mealName: "Dal rice",
       isToddlerAppropriate: true,
     });
@@ -81,19 +92,19 @@ describe("POST /api/meal-slots", () => {
     expect(response.status).toBe(201);
     expect(body).toMatchObject({
       date: "2026-05-14",
-      mealType: "DINNER",
+      mealTypeName: "Dinner",
       mealName: "Dal rice",
       isToddlerAppropriate: true,
       ingredientsStatus: "EMPTY",
       ingredients: [],
     });
     expect(body.id).toBeTruthy();
+    expect(body.mealTypeConfigId).toBeTruthy();
   });
 
   it("rejects meal slots on past days", async () => {
-    const response = await postMealSlot({
+    const response = await postLegacyMealSlot("LUNCH", {
       date: "2026-05-13",
-      mealType: "LUNCH",
       mealName: "Rasam rice",
       isToddlerAppropriate: true,
     });
@@ -104,16 +115,14 @@ describe("POST /api/meal-slots", () => {
   });
 
   it("rejects duplicate date and meal type combinations", async () => {
-    await postMealSlot({
+    await postLegacyMealSlot("BREAKFAST", {
       date: "2026-05-15",
-      mealType: "BREAKFAST",
       mealName: "Idli",
       isToddlerAppropriate: true,
     });
 
-    const response = await postMealSlot({
+    const response = await postLegacyMealSlot("BREAKFAST", {
       date: "2026-05-15",
-      mealType: "BREAKFAST",
       mealName: "Dosa",
       isToddlerAppropriate: false,
     });
@@ -133,9 +142,8 @@ describe("POST /api/meal-slots", () => {
 
     mockOllamaAvailable({ delayGenerate: () => generateGate });
 
-    const response = await postMealSlot({
+    const response = await postLegacyMealSlot("DINNER", {
       date: "2026-05-15",
-      mealType: "DINNER",
       mealName: "Chapati with sabzi",
       isToddlerAppropriate: true,
     });
@@ -168,9 +176,8 @@ describe("POST /api/meal-slots", () => {
   it("populates ingredients when Ollama is available", async () => {
     mockOllamaAvailable({ generateResponse: "idli rice, urad dal" });
 
-    const response = await postMealSlot({
+    const response = await postLegacyMealSlot("BREAKFAST", {
       date: "2026-05-16",
-      mealType: "BREAKFAST",
       mealName: "Idli",
       isToddlerAppropriate: true,
     });

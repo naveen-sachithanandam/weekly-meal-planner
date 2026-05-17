@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { applyValidEnv, clearConfigEnv } from "../helpers/env";
+import { getLegacyMealTypeConfigId } from "../helpers/meal-type-config";
 import { getTestPrisma, resetTestDatabase } from "../helpers/prisma";
 
 /** Thursday 2026-05-14 in America/Toronto */
@@ -43,10 +44,11 @@ describe("PATCH /api/meal-slots/[id]/ingredients", () => {
 
   it("replaces all ingredients and sets the slot status to READY", async () => {
     const prisma = getTestPrisma();
+    const breakfastId = await getLegacyMealTypeConfigId(prisma, "BREAKFAST");
     const slot = await prisma.mealSlot.create({
       data: {
         date: "2026-05-15",
-        mealType: "BREAKFAST",
+        mealTypeConfigId: breakfastId,
         mealName: "Idli",
         isToddlerAppropriate: true,
         ingredientsStatus: "PENDING",

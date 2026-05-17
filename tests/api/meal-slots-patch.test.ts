@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { VALID_ENV, applyValidEnv, clearConfigEnv } from "../helpers/env";
+import { getLegacyMealTypeConfigId } from "../helpers/meal-type-config";
 import { getTestPrisma, resetTestDatabase } from "../helpers/prisma";
 
 /** Thursday 2026-05-14 in America/Toronto */
@@ -62,10 +63,11 @@ describe("PATCH /api/meal-slots/[id]", () => {
 
   it("updates only the toddler flag without re-running ingredient generation", async () => {
     const prisma = getTestPrisma();
+    const dinnerId = await getLegacyMealTypeConfigId(prisma, "DINNER");
     const slot = await prisma.mealSlot.create({
       data: {
         date: "2026-05-15",
-        mealType: "DINNER",
+        mealTypeConfigId: dinnerId,
         mealName: "Chapati with sabzi",
         isToddlerAppropriate: true,
         ingredientsStatus: "READY",
@@ -97,10 +99,11 @@ describe("PATCH /api/meal-slots/[id]", () => {
 
   it("rejects updates to meal slots on past days", async () => {
     const prisma = getTestPrisma();
+    const lunchId = await getLegacyMealTypeConfigId(prisma, "LUNCH");
     const slot = await prisma.mealSlot.create({
       data: {
         date: "2026-05-13",
-        mealType: "LUNCH",
+        mealTypeConfigId: lunchId,
         mealName: "Rasam rice",
         isToddlerAppropriate: true,
         ingredientsStatus: "READY",
@@ -118,10 +121,11 @@ describe("PATCH /api/meal-slots/[id]", () => {
     mockOllamaAvailable("prawns, coconut milk, spices");
 
     const prisma = getTestPrisma();
+    const dinnerId = await getLegacyMealTypeConfigId(prisma, "DINNER");
     const slot = await prisma.mealSlot.create({
       data: {
         date: "2026-05-15",
-        mealType: "DINNER",
+        mealTypeConfigId: dinnerId,
         mealName: "Dal rice",
         isToddlerAppropriate: true,
         ingredientsStatus: "READY",
@@ -157,10 +161,11 @@ describe("PATCH /api/meal-slots/[id]", () => {
 
   it("does not re-run Ollama when the meal name is unchanged", async () => {
     const prisma = getTestPrisma();
+    const breakfastId = await getLegacyMealTypeConfigId(prisma, "BREAKFAST");
     const slot = await prisma.mealSlot.create({
       data: {
         date: "2026-05-16",
-        mealType: "BREAKFAST",
+        mealTypeConfigId: breakfastId,
         mealName: "Idli",
         isToddlerAppropriate: false,
         ingredientsStatus: "READY",

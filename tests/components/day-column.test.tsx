@@ -16,13 +16,6 @@ function buildDay(overrides: Partial<MealPlanDay> = {}): MealPlanDay {
   };
 }
 
-const weekNavigation = {
-  onPrevWeek: vi.fn(),
-  onNextWeek: vi.fn(),
-  canGoPrev: true,
-  canGoNext: true,
-};
-
 describe("DayColumn", () => {
   const onMutate = vi.fn();
 
@@ -39,7 +32,7 @@ describe("DayColumn", () => {
 
   it("renders day header with day name and formatted date", () => {
     render(
-      <DayColumn day={buildDay({ date: "2026-05-12" })} onMutate={onMutate} {...weekNavigation} />,
+      <DayColumn day={buildDay({ date: "2026-05-12" })} onMutate={onMutate} />,
     );
 
     expect(screen.getByTestId("day-header")).toBeInTheDocument();
@@ -48,7 +41,7 @@ describe("DayColumn", () => {
   });
 
   it("renders three meal slot cells for breakfast, lunch, and dinner", () => {
-    render(<DayColumn day={buildDay()} onMutate={onMutate} {...weekNavigation} />);
+    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
 
     expect(screen.getByTestId("meal-slot-breakfast")).toBeInTheDocument();
     expect(screen.getByTestId("meal-slot-lunch")).toBeInTheDocument();
@@ -69,13 +62,13 @@ describe("DayColumn", () => {
       ],
     });
 
-    render(<DayColumn day={day} onMutate={onMutate} {...weekNavigation} />);
+    render(<DayColumn day={day} onMutate={onMutate} />);
 
     expect(screen.getByTestId("meal-slot-lunch")).toHaveTextContent("Sambar rice");
   });
 
   it("applies greyed-out styling for past days", () => {
-    render(<DayColumn day={buildDay({ isPast: true })} onMutate={onMutate} {...weekNavigation} />);
+    render(<DayColumn day={buildDay({ isPast: true })} onMutate={onMutate} />);
 
     const column = screen.getByTestId("day-column");
     expect(column).toHaveAttribute("data-past", "true");
@@ -83,13 +76,13 @@ describe("DayColumn", () => {
   });
 
   it("shows toddler indicator when toddler is home", () => {
-    render(<DayColumn day={buildDay({ isToddlerHome: true })} onMutate={onMutate} {...weekNavigation} />);
+    render(<DayColumn day={buildDay({ isToddlerHome: true })} onMutate={onMutate} />);
 
     expect(screen.getByTestId("toddler-indicator")).toHaveTextContent("Toddler home");
   });
 
   it("hides toddler toggle on past days", () => {
-    render(<DayColumn day={buildDay({ isPast: true })} onMutate={onMutate} {...weekNavigation} />);
+    render(<DayColumn day={buildDay({ isPast: true })} onMutate={onMutate} />);
 
     expect(screen.queryByRole("button", { name: /mark toddler/i })).not.toBeInTheDocument();
   });
@@ -104,7 +97,7 @@ describe("DayColumn", () => {
       }),
     } as Response);
 
-    render(<DayColumn day={buildDay()} onMutate={onMutate} {...weekNavigation} />);
+    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
 
@@ -129,7 +122,7 @@ describe("DayColumn", () => {
         json: async () => ({
           override: { date: "2026-05-12", isHome: true },
           conflicts: [
-            { slotId: "slot-1", mealType: "LUNCH", mealName: "Misal pav" },
+            { slotId: "slot-1", mealTypeName: "Lunch", mealName: "Misal pav" },
           ],
         }),
       } as Response)
@@ -141,7 +134,7 @@ describe("DayColumn", () => {
         }),
       } as Response);
 
-    render(<DayColumn day={buildDay()} onMutate={onMutate} {...weekNavigation} />);
+    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
 
@@ -173,12 +166,12 @@ describe("DayColumn", () => {
       json: async () => ({
         override: { date: "2026-05-12", isHome: true },
         conflicts: [
-          { slotId: "slot-1", mealType: "LUNCH", mealName: "Misal pav" },
+          { slotId: "slot-1", mealTypeName: "Lunch", mealName: "Misal pav" },
         ],
       }),
     } as Response);
 
-    render(<DayColumn day={buildDay()} onMutate={onMutate} {...weekNavigation} />);
+    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
 
@@ -190,30 +183,11 @@ describe("DayColumn", () => {
     expect(onMutate).not.toHaveBeenCalled();
   });
 
-  it("renders week navigation chevrons and calls callbacks", () => {
-    const onPrevWeek = vi.fn();
-    const onNextWeek = vi.fn();
+  it("does not render week navigation controls", () => {
+    render(<DayColumn day={buildDay()} onMutate={onMutate} />);
 
-    render(
-      <DayColumn
-        day={buildDay()}
-        onMutate={onMutate}
-        onPrevWeek={onPrevWeek}
-        onNextWeek={onNextWeek}
-        canGoPrev={false}
-        canGoNext={true}
-      />,
-    );
-
-    const prev = screen.getByRole("button", { name: /previous week/i });
-    const next = screen.getByRole("button", { name: /next week/i });
-
-    expect(prev).toBeDisabled();
-    expect(next).not.toBeDisabled();
-
-    fireEvent.click(next);
-    expect(onNextWeek).toHaveBeenCalledTimes(1);
-    expect(onPrevWeek).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /previous week/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /next week/i })).not.toBeInTheDocument();
   });
 
   it("marks toddler away without conflict check", async () => {
@@ -227,7 +201,7 @@ describe("DayColumn", () => {
     } as Response);
 
     render(
-      <DayColumn day={buildDay({ isToddlerHome: true })} onMutate={onMutate} {...weekNavigation} />,
+      <DayColumn day={buildDay({ isToddlerHome: true })} onMutate={onMutate} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler away/i }));

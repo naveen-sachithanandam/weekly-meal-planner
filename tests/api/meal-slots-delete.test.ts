@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { applyValidEnv, clearConfigEnv } from "../helpers/env";
+import { getLegacyMealTypeConfigId } from "../helpers/meal-type-config";
 import { getTestPrisma, resetTestDatabase } from "../helpers/prisma";
 
 /** Thursday 2026-05-14 in America/Toronto */
@@ -33,10 +34,11 @@ describe("DELETE /api/meal-slots/[id]", () => {
 
   it("removes the meal slot and its ingredients", async () => {
     const prisma = getTestPrisma();
+    const dinnerId = await getLegacyMealTypeConfigId(prisma, "DINNER");
     const slot = await prisma.mealSlot.create({
       data: {
         date: "2026-05-15",
-        mealType: "DINNER",
+        mealTypeConfigId: dinnerId,
         mealName: "Chapati with sabzi",
         isToddlerAppropriate: true,
         ingredientsStatus: "READY",
@@ -65,10 +67,11 @@ describe("DELETE /api/meal-slots/[id]", () => {
 
   it("rejects deletion of meal slots on past days", async () => {
     const prisma = getTestPrisma();
+    const lunchId = await getLegacyMealTypeConfigId(prisma, "LUNCH");
     const slot = await prisma.mealSlot.create({
       data: {
         date: "2026-05-13",
-        mealType: "LUNCH",
+        mealTypeConfigId: lunchId,
         mealName: "Rasam rice",
         isToddlerAppropriate: true,
         ingredientsStatus: "READY",

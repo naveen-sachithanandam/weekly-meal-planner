@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getWeekStart, isPastDay } from "../../../lib/date";
 import { prisma } from "../../../lib/prisma";
+import { mealSlotInclude } from "../../../lib/serialize-meal-slot";
 import { isToddlerHome } from "../../../lib/toddler";
 
 function weekDates(weekStart: string): string[] {
@@ -22,11 +23,19 @@ export async function GET(request: NextRequest) {
       : getWeekStart();
   const dates = weekDates(weekStart);
 
-  const [slots, overrides] = await Promise.all([
+  const [mealTypes, slots, overrides] = await Promise.all([
+    prisma.mealTypeConfig.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true, sortOrder: true },
+    }),
     prisma.mealSlot.findMany({
       where: { date: { in: dates } },
-      include: { ingredients: true },
-      orderBy: [{ date: "asc" }, { mealType: "asc" }],
+      include: mealSlotInclude,
+      orderBy: [
+        { date: "asc" },
+        { mealTypeConfig: { sortOrder: "asc" } },
+      ],
     }),
     prisma.toddlerOverride.findMany({
       where: { date: { in: dates } },
@@ -41,7 +50,8 @@ export async function GET(request: NextRequest) {
       .filter((slot) => slot.date === date)
       .map((slot) => ({
         id: slot.id,
-        mealType: slot.mealType,
+        mealTypeConfigId: slot.mealTypeConfigId,
+        mealTypeName: slot.mealTypeConfig.name,
         mealName: slot.mealName,
         isToddlerAppropriate: slot.isToddlerAppropriate,
         ingredientsStatus: slot.ingredientsStatus,
@@ -53,5 +63,5 @@ export async function GET(request: NextRequest) {
       })),
   }));
 
-  return NextResponse.json({ weekStart, days });
+  return NextResponse.json({ weekStart, mealTypes, days });
 }

@@ -2,11 +2,9 @@
 
 import { format, parse } from "date-fns";
 
-import type { WeekNavigationProps } from "../../lib/types";
-
 type ToddlerOverrideConflict = {
   slotId: string;
-  mealType: string;
+  mealTypeName: string;
   mealName: string;
 };
 
@@ -20,7 +18,7 @@ type DayHeaderProps = {
   isToddlerHome: boolean;
   isPast: boolean;
   onMutate: () => void | Promise<unknown>;
-} & WeekNavigationProps;
+};
 
 function formatDayHeader(date: string): { dayName: string; dateLabel: string } {
   const parsed = parse(date, "yyyy-MM-dd", new Date());
@@ -32,7 +30,7 @@ function formatDayHeader(date: string): { dayName: string; dateLabel: string } {
 
 function buildConflictMessage(conflicts: ToddlerOverrideConflict[]): string {
   const lines = conflicts.map(
-    (conflict) => `${conflict.mealType}: ${conflict.mealName}`,
+    (conflict) => `${conflict.mealTypeName}: ${conflict.mealName}`,
   );
   return `Some meals may not be toddler-appropriate:\n${lines.join("\n")}\n\nSave anyway?`;
 }
@@ -55,16 +53,7 @@ async function postToddlerOverride(
   return response.json() as Promise<ToddlerOverrideResponse>;
 }
 
-export function DayHeader({
-  date,
-  isToddlerHome,
-  isPast,
-  onMutate,
-  onPrevWeek,
-  onNextWeek,
-  canGoPrev,
-  canGoNext,
-}: DayHeaderProps) {
+export function DayHeader({ date, isToddlerHome, isPast, onMutate }: DayHeaderProps) {
   const { dayName, dateLabel } = formatDayHeader(date);
 
   async function handleToggle() {
@@ -94,27 +83,7 @@ export function DayHeader({
     >
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold text-gray-900">{dayName}</p>
-        <div className="flex items-center justify-center gap-1">
-          <button
-            type="button"
-            aria-label="Previous week"
-            onClick={onPrevWeek}
-            disabled={!canGoPrev}
-            className="rounded px-1 text-sm leading-none text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            ‹
-          </button>
-          <p className="min-w-[3rem] text-center text-xs text-gray-600">{dateLabel}</p>
-          <button
-            type="button"
-            aria-label="Next week"
-            onClick={onNextWeek}
-            disabled={!canGoNext}
-            className="rounded px-1 text-sm leading-none text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            ›
-          </button>
-        </div>
+        <p className="text-xs text-gray-600">{dateLabel}</p>
       </div>
 
       <div className="mt-2 flex items-center gap-2">

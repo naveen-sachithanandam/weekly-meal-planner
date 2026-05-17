@@ -24,12 +24,13 @@ function validateBody(body: ToddlerOverrideBody): string | null {
 async function findConflicts(date: string) {
   const slots = await prisma.mealSlot.findMany({
     where: { date, isToddlerAppropriate: false },
-    orderBy: { mealType: "asc" },
+    include: { mealTypeConfig: true },
+    orderBy: { mealTypeConfig: { sortOrder: "asc" } },
   });
 
   return slots.map((slot) => ({
     slotId: slot.id,
-    mealType: slot.mealType,
+    mealTypeName: slot.mealTypeConfig.name,
     mealName: slot.mealName,
   }));
 }

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { applyValidEnv, clearConfigEnv } from "../helpers/env";
+import { getLegacyMealTypeConfigId } from "../helpers/meal-type-config";
 import { getTestPrisma, resetTestDatabase } from "../helpers/prisma";
 
 /** Thursday 2026-05-14 in America/Toronto */
@@ -80,10 +81,11 @@ describe("GET /api/meal-plan", () => {
 
   it("includes meal slots and ingredients for the requested week", async () => {
     const prisma = getTestPrisma();
+    const breakfastId = await getLegacyMealTypeConfigId(prisma, "BREAKFAST");
     await prisma.mealSlot.create({
       data: {
         date: "2025-01-05",
-        mealType: "BREAKFAST",
+        mealTypeConfigId: breakfastId,
         mealName: "Idli",
         ingredients: {
           create: [{ name: "Urad dal", approved: true }],
@@ -97,9 +99,16 @@ describe("GET /api/meal-plan", () => {
       (day: { date: string }) => day.date === "2025-01-05",
     );
 
+    expect(body.mealTypes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "Breakfast" }),
+        expect.objectContaining({ name: "Lunch" }),
+        expect.objectContaining({ name: "Dinner" }),
+      ]),
+    );
     expect(sunday.slots).toHaveLength(1);
     expect(sunday.slots[0]).toMatchObject({
-      mealType: "BREAKFAST",
+      mealTypeName: "Breakfast",
       mealName: "Idli",
       ingredientsStatus: "PENDING",
     });
