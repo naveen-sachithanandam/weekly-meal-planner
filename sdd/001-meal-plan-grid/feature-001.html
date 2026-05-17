@@ -559,9 +559,9 @@ graph TD
     <section id="sequence-save">
       <h2><span class="section-num">06</span> Sequence: Saving a Meal Slot</h2>
       <p>
-        The slot is persisted to the database before Ollama responds.
-        The UI receives the slot immediately and shows a loading indicator.
-        Ollama runs in the background — the response is never blocked on AI availability.
+        The slot is persisted before Ollama responds. The HTTP response is <strong>201</strong>.
+        Ingredient generation runs in a background task (<code>scheduleIngredientGeneration</code> via Next.js <code>after()</code>).
+        <code>MealPlanGrid</code> SWR polls every 3s while any slot is <code>PENDING</code>.
       </p>
       <div class="diagram-card">
         <div class="diagram-label">Sequence Diagram — Save Meal Slot + Async Ingredient Generation</div>
@@ -570,30 +570,42 @@ graph TD
 sequenceDiagram
     actor U as User
     participant UI as MealSlotEditing
-    participant API as POST /api/meal-slots
-    participant DB as SQLite (Prisma)
-    participant OL as Ollama (local)
+    participant API as MealSlots API
+    participant DB as SQLite
+    participant BG as Ollama worker
+    participant OL as Ollama
+    participant Grid as MealPlanGrid
 
     U->>UI: Types meal name, confirms
-    UI->>API: POST { date, mealTypeConfigId, mealName, isToddlerAppropriate }
-    API->>DB: Check if date is past → 403 if yes
-    API->>DB: Check duplicate [date, mealTypeConfigId] → 409 if exists
-    API->>OL: GET ${OLLAMA_HOST} (reachability check)
+    UI->>API: POST meal slot JSON
+    API->>DB: Reject past day with 403
+    API->>DB: Reject duplicate with 409
+    API->>OL: GET tags reachability check
     alt Ollama reachable
-        API->>DB: INSERT MealSlot { ingredientsStatus: PENDING }
-    else Ollama down
-        API->>DB: INSERT MealSlot { ingredientsStatus: EMPTY }
+        API->>DB: INSERT slot as PENDING
+    else Ollama unavailable
+        API->>DB: INSERT slot as EMPTY
     end
-    API-->>UI: 200 { slot }
-    UI-->>U: Slot appears instantly with spinner
+    API-->>UI: 201 slot JSON
+    UI->>Grid: onSaved revalidates SWR
+    UI-->>U: Filled tile with spinner
 
-    Note over API,OL: void generateIngredients() — fire and forget
-    API->>OL: POST /api/generate { model, prompt }
-    OL-->>API: ingredient list (comma-separated)
-    API->>DB: UPDATE slot → READY, INSERT ingredients
+    Note over API,BG: scheduleIngredientGeneration after response
+    API->>BG: enqueue generateIngredients
+    BG->>OL: POST api generate
+    alt success
+        OL-->>BG: comma-separated ingredients
+        BG->>DB: UPDATE READY and insert rows
+    else timeout or error
+        BG->>DB: UPDATE FAILED
+    end
 
-    Note over UI: SWR polls every 3s while any slot is PENDING
-    UI-->>U: Spinner → ingredient list
+    loop Every 3s while slot is PENDING
+        Grid->>API: GET meal plan
+        API->>DB: Fetch week data
+        API-->>Grid: Updated days payload
+        Grid-->>U: Spinner becomes ingredient list
+    end
           </pre>
         </div>
       </div>
@@ -603,9 +615,9 @@ sequenceDiagram
     <section id="sequence-load">
       <h2><span class="section-num">07</span> Sequence: Loading the Meal Grid</h2>
       <p>
-        SWR fetches the week data on mount and polls every 3 seconds while any slot
-        has <code>ingredientsStatus === PENDING</code>. Polling stops automatically
-        when all slots are resolved.
+        SWR key: <code>/api/meal-plan?offset={n}</code> (also supports <code>?week=YYYY-MM-DD</code> for a Sunday).
+        Polls every 3 seconds while any slot has <code>ingredientsStatus === PENDING</code>
+        via <code>getRefreshInterval()</code>. Polling stops when no slots are pending.
       </p>
       <div class="diagram-card">
         <div class="diagram-label">Sequence Diagram — Week Load + SWR Polling</div>
@@ -613,25 +625,26 @@ sequenceDiagram
           <pre class="mermaid">
 sequenceDiagram
     actor U as User
-    participant Grid as MealPlanGrid (SWR)
-    participant API as GET /api/meal-plan
-    participant DB as SQLite (Prisma)
+    participant Grid as MealPlanGrid
+    participant API as MealPlan API
+    participant DB as SQLite
 
-    U->>Grid: Opens app / navigates week
-    Grid->>API: GET /api/meal-plan?week=2025-01-05
-    API->>DB: Fetch active MealTypeConfigs (sorted)
-    API->>DB: Fetch MealSlots + Ingredients for 7 days
-    API->>DB: Fetch ToddlerOverrides for 7 dates
-    API-->>Grid: { weekStart, mealTypes[], days[] }
-    Grid-->>U: Renders 7 columns × N meal type rows
+    U->>Grid: Opens app or changes week
+    Grid->>API: GET meal-plan with offset
+    API->>DB: Fetch active meal types sorted
+    API->>DB: Fetch slots and ingredients for 7 days
+    API->>DB: Fetch toddler overrides for 7 dates
+    API-->>Grid: weekStart mealTypes days
+    Grid-->>U: Renders 7 columns by meal type rows
 
     loop Every 3s while any slot is PENDING
-        Grid->>API: GET /api/meal-plan?week=...
-        API-->>Grid: Updated response
-        Grid-->>U: Spinner → ingredient list (when READY)
+        Grid->>API: GET meal-plan with offset
+        API->>DB: Fetch week data
+        API-->>Grid: Updated days payload
+        Grid-->>U: Spinner becomes ingredient list when READY
     end
 
-    Note over Grid: refreshInterval = 0 when all slots READY/FAILED/EMPTY
+    Note over Grid: refreshInterval 0 when no PENDING slots
           </pre>
         </div>
       </div>
