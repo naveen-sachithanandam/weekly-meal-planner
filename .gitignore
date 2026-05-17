@@ -15,12 +15,8 @@ dist/
 *.db
 *.db-journal
 
-# Agent skills installed by npx (regenerable from skills-lock.json)
-.agents/skills/*
-!.agents/skills/orchestrate-issues/
-!.agents/skills/review-product/
-!.agents/skills/review-architect/
-!.agents/skills/review-qa/
+# Cursor agent skills — local only (regenerate from skills-lock.json)
+.agents/
 
 # Private household context — never commit these
 *.local.md

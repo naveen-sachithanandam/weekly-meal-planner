@@ -73,7 +73,7 @@ sdd/00X-feature/
 3. **Plan** — `plan.md` with Prisma shape, API routes, component tree, sequence diagrams.
 4. **Tasks** — `tasks.md` tracer bullets: files touched, done-when, blocked-by, explicit “do not”.
 5. **Issues** — tasks exported to GitHub Issues (`feature-001`, `ready-for-agent`, blockers in issue body).
-6. **Implement** — Cursor chats scoped to one task or issue; agent skills under [`.agents/`](.agents/README.md) (`orchestrate-issues`, `review-*`, `tdd`).
+6. **Implement** — Cursor chats scoped to one task or issue; optional agent skills in gitignored `.agents/` (see `skills-lock.json`).
 7. **Verify** — sign-off issues and tests mapped to ACs (e.g. `tests/components/feature-001-signoff.test.tsx`).
 
 Example implementer prompt (minimal on purpose):
@@ -100,7 +100,7 @@ Household-specific cuisine and toddler diet live in **gitignored** files (`spec.
 
 ### Agent skills
 
-See [`.agents/README.md`](.agents/README.md) for `orchestrate-issues`, reviewers, and `to-issues`.
+Skills install into `.agents/` locally (not in git). Use `skills-lock.json` and your skills CLI to add orchestration, review, and TDD helpers.
 
 ## Scripts
 
