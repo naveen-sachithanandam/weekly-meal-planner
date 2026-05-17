@@ -48,6 +48,45 @@ describe("GET /api/meal-plan", () => {
       "2026-05-15",
       "2026-05-16",
     ]);
+    expect(body.mealTypes).toHaveLength(3);
+  });
+
+  it("returns active meal types in sortOrder with id, name, and sortOrder", async () => {
+    const response = await getMealPlan();
+    const body = await response.json();
+
+    expect(body.mealTypes).toEqual([
+      expect.objectContaining({
+        id: expect.any(String),
+        name: "Breakfast",
+        sortOrder: 1,
+      }),
+      expect.objectContaining({
+        id: expect.any(String),
+        name: "Lunch",
+        sortOrder: 2,
+      }),
+      expect.objectContaining({
+        id: expect.any(String),
+        name: "Dinner",
+        sortOrder: 3,
+      }),
+    ]);
+  });
+
+  it("excludes inactive meal types from mealTypes", async () => {
+    const prisma = getTestPrisma();
+    await prisma.mealTypeConfig.create({
+      data: { name: "Supper", sortOrder: 4, isActive: false },
+    });
+
+    const response = await getMealPlan();
+    const body = await response.json();
+
+    expect(body.mealTypes).toHaveLength(3);
+    expect(body.mealTypes.map((type: { name: string }) => type.name)).not.toContain(
+      "Supper",
+    );
   });
 
   it("returns a week for the given offset query", async () => {
@@ -108,6 +147,7 @@ describe("GET /api/meal-plan", () => {
     );
     expect(sunday.slots).toHaveLength(1);
     expect(sunday.slots[0]).toMatchObject({
+      mealTypeConfigId: breakfastId,
       mealTypeName: "Breakfast",
       mealName: "Idli",
       ingredientsStatus: "PENDING",

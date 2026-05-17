@@ -6,9 +6,16 @@ export type MealPlanIngredient = {
   approved: boolean;
 };
 
+export type MealPlanMealType = {
+  id: string;
+  name: string;
+  sortOrder: number;
+};
+
 export type MealPlanSlot = {
   id: string;
-  mealType: string;
+  mealTypeConfigId: string;
+  mealTypeName: string;
   mealName: string;
   isToddlerAppropriate: boolean;
   ingredientsStatus: IngredientsStatus;
@@ -24,6 +31,7 @@ export type MealPlanDay = {
 
 export type MealPlanResponse = {
   weekStart: string;
+  mealTypes: MealPlanMealType[];
   days: MealPlanDay[];
 };
 

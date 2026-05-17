@@ -84,3 +84,20 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 - Seed Breakfast / Lunch / Dinner via `prisma/seed.ts` with idempotent `upsert` per name (SQLite does not support `createMany({ skipDuplicates: true })`).
 
 **Alternatives considered:** Keep enum for defaults and add config later (rejected — duplicates source of truth and blocks configurable meal rows).
+
+---
+
+## DL-006 — GET /api/meal-plan exposes MealTypeConfig for the grid
+
+**Date:** 2026-05-16  
+**Issue:** [#5](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/5)  
+**Status:** Resolved
+
+**Context:** After T002, meal types live in `MealTypeConfig`, but the client still needed a stable contract for how many meal rows to render per day and how to match slots to rows.
+
+**Decision:**
+- `GET /api/meal-plan` returns top-level `mealTypes[]` — active configs only, ordered by `sortOrder`, each `{ id, name, sortOrder }`.
+- Each slot in `days[].slots[]` uses `mealTypeConfigId` and `mealTypeName` (resolved from the included `mealTypeConfig` relation), not a `MealType` enum string.
+- Keep existing `week` and `offset` query params; default week start via `getWeekStart()`.
+
+**Alternatives considered:** Embed meal type metadata only inside each slot (rejected — duplicates type list across days and forces the UI to infer row count from sparse slot data).
