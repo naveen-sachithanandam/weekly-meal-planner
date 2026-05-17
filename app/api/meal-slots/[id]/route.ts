@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { isPastDay } from "../../../../lib/date";
-import { generateIngredients } from "../../../../lib/ollama";
+import {
+  isOllamaReachable,
+  scheduleIngredientGeneration,
+} from "../../../../lib/ollama";
 import { prisma } from "../../../../lib/prisma";
 import { mealSlotInclude, serializeMealSlot } from "../../../../lib/serialize-meal-slot";
 
@@ -61,6 +64,8 @@ export async function PATCH(
   const mealNameChanged =
     trimmedMealName !== undefined && trimmedMealName !== existing.mealName;
 
+  const ollamaReachable = mealNameChanged ? await isOllamaReachable() : false;
+
   const slot = await prisma.mealSlot.update({
     where: { id },
     data: {
@@ -70,7 +75,7 @@ export async function PATCH(
         : {}),
       ...(mealNameChanged
         ? {
-            ingredientsStatus: "PENDING",
+            ingredientsStatus: ollamaReachable ? "PENDING" : "EMPTY",
             ingredients: { deleteMany: {} },
           }
         : {}),
@@ -78,8 +83,8 @@ export async function PATCH(
     include: mealSlotInclude,
   });
 
-  if (mealNameChanged) {
-    void generateIngredients(slot.id, slot.mealName);
+  if (mealNameChanged && ollamaReachable) {
+    scheduleIngredientGeneration(slot.id, slot.mealName);
   }
 
   return NextResponse.json(serializeMealSlot(slot));

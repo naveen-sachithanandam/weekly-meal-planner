@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { isPastDay } from "../../../lib/date";
-import { generateIngredients, isOllamaReachable } from "../../../lib/ollama";
+import {
+  isOllamaReachable,
+  scheduleIngredientGeneration,
+} from "../../../lib/ollama";
 import { prisma } from "../../../lib/prisma";
 import { mealSlotInclude, serializeMealSlot } from "../../../lib/serialize-meal-slot";
 
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (ollamaReachable) {
-    void generateIngredients(slot.id, slot.mealName);
+    scheduleIngredientGeneration(slot.id, slot.mealName);
   }
 
   return NextResponse.json(serializeMealSlot(slot), { status: 201 });

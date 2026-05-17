@@ -207,3 +207,67 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 - First deploy: `docker compose exec app npx prisma migrate deploy` and `npx prisma db seed` (Prisma CLI runs via exec from the builder’s tooling path documented in tasks).
 
 **Alternatives considered:** Bundling Ollama in compose (rejected — host-only per constitution).
+
+---
+
+## DL-013 — Ollama ingredient generation reliability (#28)
+
+**Date:** 2026-05-16  
+**Status:** Resolved
+
+**Context:** Meal slots stayed `PENDING` (or `FAILED`/`EMPTY`) because background `void generateIngredients()` could be cut off when the Next.js route finished. PATCH always set `PENDING` on rename without re-checking reachability.
+
+**Decision:**
+- Schedule generation with Next.js `after()` via `scheduleIngredientGeneration()` (Vitest runs the task directly).
+- Reachability uses `GET ${OLLAMA_HOST}/api/tags` and requires a model matching `OLLAMA_MODEL` (prefix resolution unchanged).
+- PATCH meal rename mirrors POST: `PENDING` + background generation when reachable; `EMPTY` when not.
+- Generate timeout aligned to plan §4: **10 seconds** (`OLLAMA_GENERATE_TIMEOUT_MS`).
+- Docker: `docker-compose.yml` sets `OLLAMA_HOST=http://host.docker.internal:11434` (overrides `.env.local` localhost).
+
+**Required `.env.local` (host / bare `npm run dev`):**
+
+| Variable | Example | Notes |
+|----------|---------|--------|
+| `HOME_TIMEZONE` | `America/Toronto` | IANA zone for day boundaries |
+| `OLLAMA_HOST` | `http://localhost:11434` | Host Ollama; Compose overrides in container |
+| `OLLAMA_MODEL` | `llama3.1` | Must match `ollama list`; run `ollama pull` first |
+| `DATABASE_URL` | `file:./dev.db` | Local SQLite path |
+
+Optional: `CUISINE_CONTEXT`, `OLLAMA_HOUSEHOLD_PROMPT`.
+
+**Alternatives considered:** BullMQ/worker queue (rejected — single-household local app per plan §4).
+
+---
+
+## DL-014 — Feature 001 sign-off AC-001–AC-004 (#29)
+
+**Date:** 2026-05-16  
+**Issue:** [#29](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/29)  
+**Status:** Resolved
+
+**Context:** Tracer-bullet verification for core slot flow before AC-005–AC-008 (#30).
+
+**Decision:**
+- Added `tests/components/feature-001-signoff.test.tsx` covering end-to-end UI paths for AC-001–AC-004 (confirm → PENDING spinner, parallel slots, Ollama degradation UI, past read-only).
+- Relabeled API tests in `meal-slots.test.ts` for AC-001/002/003 traceability.
+- Marked AC-001–AC-004 complete in `tasks.md` completion checklist.
+- No production code changes required; #28 (`DL-013`) already fixed async ingredient generation.
+
+**Follow-ups:** None filed — AC-005–AC-008 deferred to #30. Toddler checkbox label is “Toddler-appropriate?” (spec prose uses “Is this meal toddler-appropriate?”); behaviour matches AC-001.
+
+---
+
+## DL-015 — Feature 001 sign-off AC-005–AC-008 (#30)
+
+**Date:** 2026-05-16  
+**Issue:** [#30](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/30)  
+**Status:** Resolved
+
+**Context:** Tracer-bullet verification for week navigation, Sunday-first grid, toddler override conflicts, and meal rename re-run (#30).
+
+**Decision:**
+- Extended `tests/components/feature-001-signoff.test.tsx` with UI tracer bullets for AC-005–AC-008 (WeekNav prev/current/next and boundary chevrons, per-week state retention, toddler conflict confirm/force flow, Sunday-first column across offsets, meal rename → PATCH → PENDING spinner).
+- Marked AC-005–AC-008 complete in `tasks.md` completion checklist.
+- No production code changes required; behaviour already covered by `meal-plan-grid.test.tsx`, `day-column.test.tsx`, `meal-slots-patch.test.ts`, and `meal-plan.test.ts`.
+
+**Follow-ups:** None.

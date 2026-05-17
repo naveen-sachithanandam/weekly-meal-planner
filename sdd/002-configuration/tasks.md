@@ -210,3 +210,9 @@ from `spec.md` manually:
 - [x] AC-005 — Deactivating a type removes it from the grid; slots preserved
 - [x] AC-006 — Duplicate name rejected with inline error
 - [x] AC-007 — Settings link visible from the meal grid page
+
+### Sign-off (#31, 2026-05-16)
+
+Tracer bullet: API integration tests cover grid reload after add/rename/reorder/deactivate;
+component smoke tests cover settings list, add/rename errors, reactivation, and `AppNav`.
+`npm test` — 173 passed (38 configuration API + 6 configuration UI smoke).

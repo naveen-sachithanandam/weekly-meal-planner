@@ -186,6 +186,31 @@ describe("POST /api/configuration/meal-types", () => {
     });
   });
 
+  it("includes a new meal type on the meal plan grid after reload", async () => {
+    applyValidEnv();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T16:00:00.000Z"));
+    vi.resetModules();
+
+    const createResponse = await postMealType({ name: "Evening Snack" });
+    const created = await createResponse.json();
+
+    const { GET: getMealPlan } = await import("../../app/api/meal-plan/route");
+    const mealPlanResponse = await getMealPlan(
+      new NextRequest("http://localhost/api/meal-plan?week=2025-01-05"),
+    );
+    const mealPlan = await mealPlanResponse.json();
+
+    expect(mealPlan.mealTypes).toHaveLength(4);
+    expect(mealPlan.mealTypes[3]).toMatchObject({
+      id: created.id,
+      name: "Evening Snack",
+      sortOrder: 4,
+    });
+
+    vi.useRealTimers();
+  });
+
   it("uses max sortOrder + 1 when sort orders have gaps", async () => {
     const prisma = getTestPrisma();
     await prisma.mealTypeConfig.create({
@@ -431,6 +456,26 @@ describe("PATCH /api/configuration/meal-types/[id]", () => {
     ]);
 
     vi.useRealTimers();
+  });
+
+  it("preserves meal slots in the database when a meal type is deactivated", async () => {
+    const prisma = getTestPrisma();
+    const dinnerId = await getLegacyMealTypeConfigId(prisma, "DINNER");
+    await prisma.mealSlot.create({
+      data: {
+        date: "2025-01-05",
+        mealTypeConfigId: dinnerId,
+        mealName: "Pasta",
+      },
+    });
+
+    await patchMealType(dinnerId, { isActive: false });
+
+    const slot = await prisma.mealSlot.findFirstOrThrow({
+      where: { mealTypeConfigId: dinnerId },
+    });
+    expect(slot.mealName).toBe("Pasta");
+    expect(slot.mealTypeConfigId).toBe(dinnerId);
   });
 
   it("reactivates an inactive meal type", async () => {

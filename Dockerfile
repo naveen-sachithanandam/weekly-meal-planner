@@ -7,6 +7,12 @@ RUN npm ci
 # Stage 2 — builder
 FROM node:20-alpine AS builder
 WORKDIR /app
+# Placeholders for `next build` (config is validated at collect page data).
+# Runtime values come from docker-compose / .env.local.
+ENV HOME_TIMEZONE=UTC
+ENV OLLAMA_HOST=http://localhost:11434
+ENV OLLAMA_MODEL=llama3
+ENV DATABASE_URL=file:/tmp/build.db
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
