@@ -17,6 +17,8 @@ dist/
 
 # Cursor agent skills — local only (regenerate from skills-lock.json)
 .agents/
+.agents/README.md
+.agents/**
 
 # Private household context — never commit these
 *.local.md
