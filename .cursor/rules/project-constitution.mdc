@@ -105,6 +105,7 @@ These invariants apply to every feature, every file, every task.
 - **Error handling:** API routes return `{ error: string }` with appropriate HTTP status. No unhandled promise rejections.
 - **SWR:** Use for all client-side data fetching. No `useEffect` + `fetch` patterns.
 - **Decision and Issue Log** Fixes will be logged in a decision log and GitHub Issue before fixing.
+- **App Names** Create meaningful concise names for the applications.
 
 ---
 
