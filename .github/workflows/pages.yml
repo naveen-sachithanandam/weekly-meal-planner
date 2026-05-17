@@ -1,0 +1,74 @@
+# Publish sdd/*.html spec rollups via GitHub Pages (renders Mermaid + layout).
+# Enable: Settings → Pages → Source: GitHub Actions
+
+name: Deploy SDD docs
+
+on:
+  push:
+    branches:
+      - main
+      - feature-spec-driven-development
+    paths:
+      - "sdd/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build static site
+        run: |
+          mkdir -p _site/sdd
+          cp -r sdd/. _site/sdd/
+          cat > _site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Weekly Meal Planner — SDD Docs</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.6; color: #1a1d23; }
+              h1 { font-size: 1.5rem; }
+              a { color: #2563eb; }
+              li { margin: 0.5rem 0; }
+              .muted { color: #6b7280; font-size: 0.9rem; }
+            </style>
+          </head>
+          <body>
+            <h1>Spec-Driven Development docs</h1>
+            <p class="muted">Published from <code>sdd/</code> on push. See <a href="https://github.com/naveen-sachithanandam/weekly-meal-planner">README</a> for the SDD workflow.</p>
+            <ul>
+              <li><a href="sdd/001-meal-plan-grid/feature-001.html">Feature 001 — Weekly Meal Plan Grid</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
