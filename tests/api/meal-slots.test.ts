@@ -114,6 +114,41 @@ describe("POST /api/meal-slots", () => {
     expect(body).toEqual({ error: "Cannot modify meal slots for past days" });
   });
 
+  it("rejects an unknown mealTypeConfigId", async () => {
+    const response = await postMealSlot({
+      date: "2026-05-15",
+      mealTypeConfigId: "nonexistent-config-id",
+      mealName: "Idli",
+      isToddlerAppropriate: true,
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      error: "mealTypeConfigId must reference an active meal type",
+    });
+  });
+
+  it("rejects an inactive mealTypeConfigId", async () => {
+    const prisma = getTestPrisma();
+    const inactive = await prisma.mealTypeConfig.create({
+      data: { name: "Brunch", sortOrder: 0, isActive: false },
+    });
+
+    const response = await postMealSlot({
+      date: "2026-05-15",
+      mealTypeConfigId: inactive.id,
+      mealName: "Pancakes",
+      isToddlerAppropriate: false,
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      error: "mealTypeConfigId must reference an active meal type",
+    });
+  });
+
   it("rejects duplicate date and meal type combinations", async () => {
     await postLegacyMealSlot("BREAKFAST", {
       date: "2026-05-15",

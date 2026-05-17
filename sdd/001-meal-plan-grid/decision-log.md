@@ -101,3 +101,22 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 - Keep existing `week` and `offset` query params; default week start via `getWeekStart()`.
 
 **Alternatives considered:** Embed meal type metadata only inside each slot (rejected — duplicates type list across days and forces the UI to infer row count from sparse slot data).
+
+---
+
+## DL-007 — POST /api/meal-slots uses mealTypeConfigId
+
+**Date:** 2026-05-16  
+**Issue:** [#6](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/6)  
+**Status:** Resolved
+
+**Context:** The original T006 implementation accepted a `mealType` enum string. After T002 (`MealTypeConfig`), slots are keyed by `mealTypeConfigId` with `@@unique([date, mealTypeConfigId])`.
+
+**Decision:**
+- POST body: `date`, `mealTypeConfigId`, `mealName`, `isToddlerAppropriate`.
+- Return `400` when `mealTypeConfigId` is missing, unknown, or references an inactive config.
+- Return `409` on duplicate `[date, mealTypeConfigId]`.
+- Response serializes `mealTypeConfigId` and `mealTypeName` (not enum strings).
+- Unchanged: `403` past day; `PENDING`/`EMPTY` on create; fire-and-forget `generateIngredients`.
+
+**Alternatives considered:** Accept both `mealType` and `mealTypeConfigId` during migration (rejected — dual contract complicates clients and tests).
