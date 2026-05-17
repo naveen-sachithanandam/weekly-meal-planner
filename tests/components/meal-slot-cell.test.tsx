@@ -15,7 +15,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={buildSlot()}
-        mealType={mealTypeByName("LUNCH")}
+        mealType={mealTypeByName("Lunch")}
         date="2026-05-10"
         isPast
       />,
@@ -31,7 +31,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={null}
-        mealType={mealTypeByName("BREAKFAST")}
+        mealType={mealTypeByName("Breakfast")}
         date="2026-05-10"
         isPast
       />,
@@ -45,7 +45,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={null}
-        mealType={mealTypeByName("DINNER")}
+        mealType={mealTypeByName("Dinner")}
         date="2026-05-12"
         isPast={false}
       />,
@@ -58,7 +58,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={null}
-        mealType={mealTypeByName("LUNCH")}
+        mealType={mealTypeByName("Lunch")}
         date="2026-05-12"
         isPast={false}
       />,
@@ -74,7 +74,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={buildSlot({ mealName: "Dal rice" })}
-        mealType={mealTypeByName("LUNCH")}
+        mealType={mealTypeByName("Lunch")}
         date="2026-05-12"
         isPast={false}
       />,
@@ -88,7 +88,7 @@ describe("MealSlotCell", () => {
     render(
       <MealSlotCell
         slot={buildSlot()}
-        mealType={mealTypeByName("LUNCH")}
+        mealType={mealTypeByName("Lunch")}
         date="2026-05-12"
         isPast={false}
       />,

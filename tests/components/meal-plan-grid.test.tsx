@@ -26,9 +26,9 @@ function buildWeekResponse(weekStart: string): MealPlanResponse {
   return {
     weekStart,
     mealTypes: [
-      { id: "cfg-breakfast", name: "BREAKFAST", sortOrder: 1 },
-      { id: "cfg-lunch", name: "LUNCH", sortOrder: 2 },
-      { id: "cfg-dinner", name: "DINNER", sortOrder: 3 },
+      { id: "cfg-breakfast", name: "Breakfast", sortOrder: 1 },
+      { id: "cfg-lunch", name: "Lunch", sortOrder: 2 },
+      { id: "cfg-dinner", name: "Dinner", sortOrder: 3 },
     ],
     days,
   };
@@ -152,7 +152,7 @@ describe("MealPlanGrid", () => {
         {
           id: "slot-1",
           mealTypeConfigId: "cfg-lunch",
-          mealTypeName: "LUNCH",
+          mealTypeName: "Lunch",
           mealName: "Soup",
           isToddlerAppropriate: true,
           ingredientsStatus: "PENDING",

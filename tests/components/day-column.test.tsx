@@ -57,7 +57,7 @@ describe("DayColumn", () => {
 
   it("passes slot data to meal slot cells", () => {
     const day = buildDay({
-      slots: [buildSlot({ mealTypeConfigId: "cfg-lunch", mealTypeName: "LUNCH" })],
+      slots: [buildSlot({ mealTypeConfigId: "cfg-lunch", mealTypeName: "Lunch" })],
     });
 
     render(
@@ -210,7 +210,7 @@ describe("DayColumn", () => {
   it("renders a fourth row when mealTypes includes a fourth type", () => {
     const mealTypes = [
       ...DEFAULT_MEAL_TYPES,
-      { id: "cfg-supper", name: "SUPPER", sortOrder: 4 },
+      { id: "cfg-supper", name: "Supper", sortOrder: 4 },
     ];
 
     render(

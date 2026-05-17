@@ -156,3 +156,21 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 - `DayHeader` shows date, toddler indicator, and toggle only — no week navigation.
 
 **Alternatives considered:** Hardcoded three-row layout (rejected — blocks Feature 002 configurable meal structure).
+
+---
+
+## DL-010 — Meal slot UI uses MealTypeConfig
+
+**Date:** 2026-05-16  
+**Issues:** [#13](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/13), [#14](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/14), [#15](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/15), [#16](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/16)  
+**Status:** Resolved
+
+**Context:** T013–T016 implement the meal slot cell orchestrator, empty/editing/filled states, ingredient list/loading, and `app/page.tsx`. After T002 (`MealTypeConfig`), slot creation must use `mealTypeConfigId`, not a `MealType` enum string.
+
+**Decision:**
+- `MealSlotCell` receives `mealType: MealPlanMealType` (from `mealTypes[]`) and passes `mealType.id` as `mealTypeConfigId` to `MealSlotEditing`.
+- `MealSlotEditing` POSTs `{ date, mealTypeConfigId, mealName, isToddlerAppropriate }` to `/api/meal-slots`.
+- `MealSlotFilled`, `IngredientList`, and `IngredientLoading` are unchanged in behavior; ingredient PATCH uses slot id only.
+- `app/page.tsx` renders `<MealPlanGrid />` with page title.
+
+**Alternatives considered:** Keep `mealType` string prop on `MealSlotCell` (rejected — duplicates config id/name and encourages enum-style literals in tests).

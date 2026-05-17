@@ -26,7 +26,10 @@ export function MealSlotCell({
 
   const onStartEditing = () => setIsEditing(true);
   const onCancel = () => setIsEditing(false);
-  const onSaved = () => onMutate?.();
+  const onSaved = async () => {
+    await onMutate?.();
+    setIsEditing(false);
+  };
 
   return (
     <div
