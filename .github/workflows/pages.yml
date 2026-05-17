@@ -55,7 +55,9 @@ jobs:
             <h1>Spec-Driven Development docs</h1>
             <p class="muted">Published from <code>sdd/</code> on push. See <a href="https://github.com/naveen-sachithanandam/weekly-meal-planner">README</a> for the SDD workflow.</p>
             <ul>
+              <li><a href="sdd/architecture.md">Architecture overview</a></li>
               <li><a href="sdd/001-meal-plan-grid/feature-001.html">Feature 001 — Weekly Meal Plan Grid</a></li>
+              <li><a href="sdd/002-configuration/spec.md">Feature 002 — Configuration (spec)</a></li>
               <li><a href="sdd/003-shopping-list/spec.md">Feature 003 — Shopping List (spec)</a></li>
             </ul>
           </body>
