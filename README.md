@@ -2,6 +2,32 @@
 
 Single-household weekly meal planner (Next.js 15, SQLite, local Ollama). Built with **Spec-Driven Development (SDD)** — specs and plans are the contract; agents implement against them.
 
+## Screenshots
+
+### Meal plan grid
+
+Weekly grid with warm tokens, toddler-day labels, status badges, and collapsible meal slots.
+
+![Meal plan grid](docs/screenshots/01-meal-plan-grid.png)
+
+### Expanded meal slot
+
+Ingredient checklist with approve toggles; approved items sync to the shopping list.
+
+![Expanded meal slot](docs/screenshots/02-meal-slot-expanded.png)
+
+### Settings
+
+Meal types and household configuration.
+
+![Settings](docs/screenshots/03-settings.png)
+
+### Shopping list
+
+Deduped approved ingredients for the selected week (print-friendly).
+
+![Shopping list](docs/screenshots/04-shopping-list.png)
+
 ## Quick start
 
 ```bash
@@ -93,6 +119,7 @@ Household-specific cuisine and toddler diet live in **gitignored** files (`spec.
 | `npm test` | Vitest (API + components) |
 | `npm run db:migrate` | Prisma migrate |
 | `npm run db:seed` | Seed meal types |
+| `npm run capture-screenshots` | Regenerate `docs/screenshots/` (app must be running) |
 
 ## Docker
 
