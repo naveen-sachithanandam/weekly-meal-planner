@@ -59,6 +59,10 @@ GitHub shows `.html` files as **source**, not as a live page. To read the intera
 
 The workflow copies the `sdd/` tree on each push to `main` or `feature-spec-driven-development` (and supports manual **Run workflow**).
 
+## Architecture
+
+System overview (deployment, data model, APIs, sequences): [`sdd/architecture.md`](sdd/architecture.md). GitHub renders the Mermaid diagrams in that file; Feature 001’s [HTML rollup](sdd/001-meal-plan-grid/feature-001.html) has additional detail.
+
 ## How SDD was used on this project
 
 SDD here follows **Specify → Plan → Tasks → Implement**. The AI does not make architecture calls; the spec does.
