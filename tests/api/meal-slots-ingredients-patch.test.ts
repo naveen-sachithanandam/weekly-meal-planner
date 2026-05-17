@@ -73,6 +73,8 @@ describe("PATCH /api/meal-slots/[id]/ingredients", () => {
     expect(response.status).toBe(200);
     expect(body).toMatchObject({
       id: slot.id,
+      mealTypeConfigId: breakfastId,
+      mealTypeName: "Breakfast",
       mealName: "Idli",
       ingredientsStatus: "READY",
     });

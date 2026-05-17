@@ -132,7 +132,7 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 **Context:** After T002 (`MealTypeConfig`), PATCH responses must expose `mealTypeConfigId` / `mealTypeName` (via shared `serializeMealSlot`). Toddler override conflict detection previously returned enum-style `mealType` strings; conflicts must use the configured meal type display name.
 
 **Decision:**
-- `PATCH /api/meal-slots/[id]` — response uses `serializeMealSlot` (`mealTypeConfigId`, `mealTypeName`); unchanged validation (`403` past day, ingredient reset on `mealName` change).
+- `PATCH /api/meal-slots/[id]` and `PATCH /api/meal-slots/[id]/ingredients` — responses use `serializeMealSlot` (`mealTypeConfigId`, `mealTypeName`); slot PATCH keeps `403` past day and ingredient reset on `mealName` change.
 - `DELETE /api/meal-slots/[id]` — unchanged (`204`, cascade delete, `403` past day).
 - `POST /api/toddler-overrides` — `conflicts[]` entries use `{ slotId, mealType, mealName }` where `mealType` is `MealTypeConfig.name` (e.g. `"Lunch"`), not a `MealType` enum string.
 
