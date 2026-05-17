@@ -60,7 +60,7 @@ Create `.env.local` (gitignored) with real values for local development
 (bare `npm run dev`, not Docker):
 
 ```
-HOME_TIMEZONE=America/Toronto
+HOME_TIMEZONE=America/Chicago
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=llama3
 DATABASE_URL=file:./dev.db

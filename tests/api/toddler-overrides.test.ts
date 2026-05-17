@@ -5,7 +5,7 @@ import { applyValidEnv, clearConfigEnv } from "../helpers/env";
 import { getLegacyMealTypeConfigId } from "../helpers/meal-type-config";
 import { getTestPrisma, resetTestDatabase } from "../helpers/prisma";
 
-/** Thursday 2026-05-14 in America/Toronto */
+/** Thursday 2026-05-14 in America/Chicago */
 const FIXED_NOW = new Date("2026-05-14T16:00:00.000Z");
 
 async function postToddlerOverride(body: Record<string, unknown>) {
