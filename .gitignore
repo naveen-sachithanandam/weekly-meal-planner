@@ -31,3 +31,6 @@ dist/
 
 #Article files
 *article-*.md
+
+# SDD HTML rollups and mockups — local only (not on GitHub / htmlpreview)
+*.html

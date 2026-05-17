@@ -9,7 +9,8 @@ System architecture for the household meal planner. Derived from the [project co
 | [Feature 001 — Meal plan grid](001-meal-plan-grid/spec.md) | Grid, slots, Ollama ingredients, toddler overrides |
 | [Feature 002 — Configuration](002-configuration/spec.md) | Meal type CRUD, reorder, soft-delete |
 | [Feature 003 — Shopping list](003-shopping-list/spec.md) | Approved-ingredient aggregation |
-| [Feature 001 HTML rollup](001-meal-plan-grid/feature-001.html) | Interactive spec with detailed diagrams |
+
+Local-only HTML rollups (gitignored): `001-meal-plan-grid/feature-001.html`, mockups under each feature folder.
 
 ---
 

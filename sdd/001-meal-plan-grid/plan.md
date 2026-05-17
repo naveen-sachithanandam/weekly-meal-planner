@@ -372,7 +372,7 @@ Dinner    │ Rajma[●5] │  (past)   │ (past)  │ │ Bharta [⚠] │
           ─────────────────────────────────────────────────
 ```
 
-See `sdd/001-meal-plan-grid/mockup-meal-slot.html` for an interactive rendered version.
+See `mockup-meal-slot.html` in this folder (gitignored; open locally in a browser) for an interactive rendered version.
 
 **Design language — warm/homely palette:**
 

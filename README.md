@@ -41,27 +41,15 @@ npm run dev
 
 Open `http://localhost:3000`. Settings: `/settings`.
 
-## Viewing feature specs on GitHub
+## Viewing specs
 
-GitHub shows `.html` files as **source**, not as a live page. To read the interactive spec (Mermaid diagrams, nav, AC grid), use one of:
+Committed specs are Markdown under `sdd/` — GitHub renders Mermaid in [`sdd/architecture.md`](sdd/architecture.md) and each feature’s `spec.md` / `plan.md`.
 
-| Method | URL / steps |
-|--------|-------------|
-| **GitHub Pages** (recommended) | After enabling Pages (see below): [Feature 001 spec](https://naveen-sachithanandam.github.io/weekly-meal-planner/sdd/001-meal-plan-grid/feature-001.html) |
-| **HTML Preview** (no setup) | [htmlpreview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/naveen-sachithanandam/weekly-meal-planner/main/sdd/001-meal-plan-grid/feature-001.html) — swap `main` for your branch if needed |
-| **Local** | Open `sdd/001-meal-plan-grid/feature-001.html` in a browser |
-
-### Enable GitHub Pages
-
-1. Push this repo (workflow included: `.github/workflows/pages.yml`).
-2. Repo **Settings → Pages → Build and deployment**: source **GitHub Actions**.
-3. After the workflow runs, the site root lists features; Feature 001 is at `/sdd/001-meal-plan-grid/feature-001.html`.
-
-The workflow copies the `sdd/` tree on each push to `main` or `feature-spec-driven-development` (and supports manual **Run workflow**).
+Optional HTML rollups (`feature-00X.html`, mockups) are **gitignored** and stay on your machine. Open them locally in a browser; they are not published to GitHub, GitHub Pages, or htmlpreview.
 
 ## Architecture
 
-System overview (deployment, data model, APIs, sequences): [`sdd/architecture.md`](sdd/architecture.md). GitHub renders the Mermaid diagrams in that file; Feature 001’s [HTML rollup](sdd/001-meal-plan-grid/feature-001.html) has additional detail.
+System overview (deployment, data model, APIs, sequences): [`sdd/architecture.md`](sdd/architecture.md).
 
 ## How SDD was used on this project
 
@@ -75,7 +63,7 @@ sdd/00X-feature/
   plan.md              ← schema, API, components
   tasks.md             ← atomic tasks, one chat + one commit each
   decision-log.md      ← deviations and env notes
-  feature-00X.html     ← human-readable rollup of spec + plan (optional)
+  feature-00X.html     ← local rollup of spec + plan (gitignored; optional)
 ```
 
 ### Workflow in practice
@@ -100,11 +88,11 @@ Implement T003. Do not go beyond T003.
 
 ### Features
 
-| Feature | Spec | HTML rollup | Status |
-|---------|------|-------------|--------|
-| 001 — Meal plan grid | [`sdd/001-meal-plan-grid/spec.md`](sdd/001-meal-plan-grid/spec.md) | [`feature-001.html`](sdd/001-meal-plan-grid/feature-001.html) | Implemented |
-| 002 — Configuration | [`sdd/002-configuration/spec.md`](sdd/002-configuration/spec.md) | *planned* | Implemented |
-| 003 — Shopping list | [`sdd/003-shopping-list/spec.md`](sdd/003-shopping-list/spec.md) | *planned* | Implemented |
+| Feature | Spec | Status |
+|---------|------|--------|
+| 001 — Meal plan grid | [`sdd/001-meal-plan-grid/spec.md`](sdd/001-meal-plan-grid/spec.md) | Implemented |
+| 002 — Configuration | [`sdd/002-configuration/spec.md`](sdd/002-configuration/spec.md) | Implemented |
+| 003 — Shopping list | [`sdd/003-shopping-list/spec.md`](sdd/003-shopping-list/spec.md) | Implemented |
 
 ### Public vs private context
 
