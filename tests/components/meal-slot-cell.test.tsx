@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { MealSlotCell } from "../../components/meal-plan-grid/meal-slot-cell/meal-slot-cell";
 import { buildSlot, mealTypeByName } from "../helpers/meal-plan-fixtures";
+import { mealSlotExpandProps } from "../helpers/meal-slot-expand";
 
 describe("MealSlotCell", () => {
   afterEach(() => {
@@ -18,6 +19,7 @@ describe("MealSlotCell", () => {
         mealType={mealTypeByName("Lunch")}
         date="2026-05-10"
         isPast
+        {...mealSlotExpandProps()}
       />,
     );
 
@@ -34,6 +36,7 @@ describe("MealSlotCell", () => {
         mealType={mealTypeByName("Breakfast")}
         date="2026-05-10"
         isPast
+        {...mealSlotExpandProps()}
       />,
     );
 
@@ -48,6 +51,7 @@ describe("MealSlotCell", () => {
         mealType={mealTypeByName("Dinner")}
         date="2026-05-12"
         isPast={false}
+        {...mealSlotExpandProps()}
       />,
     );
 
@@ -61,6 +65,7 @@ describe("MealSlotCell", () => {
         mealType={mealTypeByName("Lunch")}
         date="2026-05-12"
         isPast={false}
+        {...mealSlotExpandProps()}
       />,
     );
 
@@ -77,27 +82,14 @@ describe("MealSlotCell", () => {
         mealType={mealTypeByName("Lunch")}
         date="2026-05-12"
         isPast={false}
+        {...mealSlotExpandProps()}
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Dal rice" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Dal rice, expand ingredients" }),
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText(/meal name/i)).not.toBeInTheDocument();
-  });
-
-  it("enters editing when filled meal name is clicked", () => {
-    render(
-      <MealSlotCell
-        slot={buildSlot()}
-        mealType={mealTypeByName("Lunch")}
-        date="2026-05-12"
-        isPast={false}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Sambar rice" }));
-
-    expect(screen.getByLabelText(/meal name/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Sambar rice" })).not.toBeInTheDocument();
   });
 
   it("enters editing when Edit meal is clicked on a filled slot", () => {
@@ -107,6 +99,7 @@ describe("MealSlotCell", () => {
         mealType={mealTypeByName("Lunch")}
         date="2026-05-12"
         isPast={false}
+        {...mealSlotExpandProps()}
       />,
     );
 

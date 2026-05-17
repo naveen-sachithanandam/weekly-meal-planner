@@ -1,1 +1,120 @@
 @import "tailwindcss";
+
+:root {
+  --color-base: #fdfaf6;
+  --color-surface: #fdf6ee;
+  --color-border: #ede5d8;
+  --color-text: #3d2c1e;
+  --color-text-muted: #8a7060;
+  --color-accent: #c17f3a;
+  --color-accent-soft: #fdf0de;
+
+  --badge-ready-bg: #eaf4e0;
+  --badge-ready-text: #3d6b1a;
+  --badge-pending-bg: #e8f0fc;
+  --badge-pending-text: #3355a0;
+  --badge-warn-bg: #fce8e8;
+  --badge-warn-text: #a02020;
+
+  --toddler-bg: #fff3e0;
+  --toddler-text: #a05a1a;
+
+  --meal-cell-shadow: 0 1px 3px rgba(61, 44, 30, 0.08);
+}
+
+@layer base {
+  body {
+    background: var(--color-base);
+    color: var(--color-text);
+  }
+}
+
+@layer components {
+  .surface-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    box-shadow: var(--meal-cell-shadow);
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+
+  .btn-accent {
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    border-radius: 0.375rem;
+    transition: background 150ms ease-out;
+  }
+
+  .btn-accent:hover:not(:disabled) {
+    background: var(--color-accent-soft);
+  }
+
+  .btn-neutral {
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 0.375rem;
+    transition: background 150ms ease-out;
+  }
+
+  .btn-neutral:hover:not(:disabled) {
+    background: var(--color-accent-soft);
+    border-color: var(--color-accent);
+  }
+
+  .btn-danger {
+    border: 1px solid var(--badge-warn-text);
+    color: var(--badge-warn-text);
+    border-radius: 0.375rem;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: var(--badge-warn-bg);
+  }
+
+  .nav-header {
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .badge-ready {
+    background: var(--badge-ready-bg);
+    color: var(--badge-ready-text);
+  }
+
+  .badge-pending {
+    background: var(--badge-pending-bg);
+    color: var(--badge-pending-text);
+  }
+
+  .badge-warn {
+    background: var(--badge-warn-bg);
+    color: var(--badge-warn-text);
+  }
+
+  .toddler-chip {
+    background: var(--toddler-bg);
+    color: var(--toddler-text);
+  }
+
+  .ingredient-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 150ms ease-out;
+  }
+
+  .ingredient-panel[data-expanded="true"] {
+    grid-template-rows: 1fr;
+  }
+
+  .ingredient-panel-inner {
+    overflow: hidden;
+  }
+
+  .day-column-past {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}

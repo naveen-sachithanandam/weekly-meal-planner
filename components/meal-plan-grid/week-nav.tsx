@@ -35,13 +35,13 @@ export function WeekNav({
 
   return (
     <nav className="mb-4 flex flex-wrap items-center gap-3">
-      <div className="flex items-center gap-2 text-sm text-gray-700">
+      <div className="flex items-center gap-2 text-sm">
         <button
           type="button"
           aria-label="Previous week"
           onClick={onPreviousWeek}
           disabled={!canGoPrev}
-          className="rounded px-2 py-1 text-lg leading-none hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-neutral px-2 py-1 text-lg leading-none disabled:cursor-not-allowed disabled:opacity-40"
         >
           ‹
         </button>
@@ -51,7 +51,7 @@ export function WeekNav({
           aria-label="Next week"
           onClick={onNextWeek}
           disabled={!canGoNext}
-          className="rounded px-2 py-1 text-lg leading-none hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-neutral px-2 py-1 text-lg leading-none disabled:cursor-not-allowed disabled:opacity-40"
         >
           ›
         </button>
@@ -60,7 +60,7 @@ export function WeekNav({
         type="button"
         aria-label="This week"
         onClick={onCurrentWeek}
-        className="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
+        className="btn-accent px-3 py-1 text-sm"
       >
         This week
       </button>

@@ -36,6 +36,8 @@ describe("DayColumn", () => {
       <DayColumn
         day={buildDay({ date: "2026-05-12" })}
         mealTypes={DEFAULT_MEAL_TYPES}
+        expandedSlotId={null}
+        onToggleExpand={vi.fn()}
         onMutate={onMutate}
       />,
     );
@@ -47,7 +49,7 @@ describe("DayColumn", () => {
 
   it("renders three meal slot cells for breakfast, lunch, and dinner", () => {
     render(
-      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} expandedSlotId={null} onToggleExpand={vi.fn()} onMutate={onMutate} />,
     );
 
     expect(screen.getByTestId("meal-slot-breakfast")).toBeInTheDocument();
@@ -61,7 +63,7 @@ describe("DayColumn", () => {
     });
 
     render(
-      <DayColumn day={day} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+      <DayColumn day={day} mealTypes={DEFAULT_MEAL_TYPES} expandedSlotId={null} onToggleExpand={vi.fn()} onMutate={onMutate} />,
     );
 
     expect(screen.getByTestId("meal-slot-lunch")).toHaveTextContent("Sambar rice");
@@ -72,13 +74,15 @@ describe("DayColumn", () => {
       <DayColumn
         day={buildDay({ isPast: true })}
         mealTypes={DEFAULT_MEAL_TYPES}
+        expandedSlotId={null}
+        onToggleExpand={vi.fn()}
         onMutate={onMutate}
       />,
     );
 
     const column = screen.getByTestId("day-column");
     expect(column).toHaveAttribute("data-past", "true");
-    expect(column.className).toMatch(/opacity-50/);
+    expect(column.className).toMatch(/day-column-past/);
   });
 
   it("shows toddler indicator when toddler is home", () => {
@@ -86,6 +90,8 @@ describe("DayColumn", () => {
       <DayColumn
         day={buildDay({ isToddlerHome: true })}
         mealTypes={DEFAULT_MEAL_TYPES}
+        expandedSlotId={null}
+        onToggleExpand={vi.fn()}
         onMutate={onMutate}
       />,
     );
@@ -98,6 +104,8 @@ describe("DayColumn", () => {
       <DayColumn
         day={buildDay({ isPast: true })}
         mealTypes={DEFAULT_MEAL_TYPES}
+        expandedSlotId={null}
+        onToggleExpand={vi.fn()}
         onMutate={onMutate}
       />,
     );
@@ -116,7 +124,7 @@ describe("DayColumn", () => {
     } as Response);
 
     render(
-      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} expandedSlotId={null} onToggleExpand={vi.fn()} onMutate={onMutate} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
@@ -155,7 +163,7 @@ describe("DayColumn", () => {
       } as Response);
 
     render(
-      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} expandedSlotId={null} onToggleExpand={vi.fn()} onMutate={onMutate} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
@@ -194,7 +202,7 @@ describe("DayColumn", () => {
     } as Response);
 
     render(
-      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} expandedSlotId={null} onToggleExpand={vi.fn()} onMutate={onMutate} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /mark toddler home/i }));
@@ -214,7 +222,7 @@ describe("DayColumn", () => {
     ];
 
     render(
-      <DayColumn day={buildDay()} mealTypes={mealTypes} onMutate={onMutate} />,
+      <DayColumn day={buildDay()} mealTypes={mealTypes} expandedSlotId={null} onToggleExpand={vi.fn()} onMutate={onMutate} />,
     );
 
     expect(screen.getByTestId("meal-slot-supper")).toBeInTheDocument();
@@ -222,7 +230,7 @@ describe("DayColumn", () => {
 
   it("does not render week navigation controls", () => {
     render(
-      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} onMutate={onMutate} />,
+      <DayColumn day={buildDay()} mealTypes={DEFAULT_MEAL_TYPES} expandedSlotId={null} onToggleExpand={vi.fn()} onMutate={onMutate} />,
     );
 
     expect(screen.queryByRole("button", { name: /previous week/i })).not.toBeInTheDocument();
@@ -243,6 +251,8 @@ describe("DayColumn", () => {
       <DayColumn
         day={buildDay({ isToddlerHome: true })}
         mealTypes={DEFAULT_MEAL_TYPES}
+        expandedSlotId={null}
+        onToggleExpand={vi.fn()}
         onMutate={onMutate}
       />,
     );
