@@ -70,6 +70,72 @@ describe("MealPlanGrid", () => {
     expect(screen.getByText("May 16")).toBeInTheDocument();
   });
 
+  it("renders meal type row labels from API mealTypes", () => {
+    render(<MealPlanGrid />);
+
+    expect(screen.getByTestId("meal-type-row-labels")).toBeInTheDocument();
+    expect(screen.getByTestId("meal-type-label-breakfast")).toHaveTextContent(
+      "Breakfast",
+    );
+    expect(screen.getByTestId("meal-type-label-lunch")).toHaveTextContent("Lunch");
+    expect(screen.getByTestId("meal-type-label-dinner")).toHaveTextContent(
+      "Dinner",
+    );
+  });
+
+  it("shows one row label per active meal type from the API", () => {
+    mockUseSWR.mockImplementation(() => ({
+      data: {
+        ...buildWeekResponse("2026-05-10"),
+        mealTypes: [
+          { id: "cfg-breakfast", name: "Breakfast", sortOrder: 1 },
+          { id: "cfg-lunch", name: "Lunch", sortOrder: 2 },
+          { id: "cfg-dinner", name: "Dinner", sortOrder: 3 },
+          { id: "cfg-supper", name: "Supper", sortOrder: 4 },
+        ],
+      },
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+    }));
+
+    render(<MealPlanGrid />);
+
+    const labels = screen.getByTestId("meal-type-row-labels");
+    expect(
+      labels.querySelectorAll("[data-testid^='meal-type-label-']"),
+    ).toHaveLength(4);
+    expect(screen.getByTestId("meal-type-label-supper")).toHaveTextContent("Supper");
+    expect(screen.getAllByTestId("meal-slot-supper")).toHaveLength(7);
+  });
+
+  it("uses configured meal type names instead of hardcoded defaults", () => {
+    mockUseSWR.mockImplementation(() => ({
+      data: {
+        ...buildWeekResponse("2026-05-10"),
+        mealTypes: [
+          { id: "cfg-breakfast", name: "Morning Meal", sortOrder: 1 },
+          { id: "cfg-lunch", name: "Midday", sortOrder: 2 },
+          { id: "cfg-dinner", name: "Main Meal", sortOrder: 3 },
+        ],
+      },
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+    }));
+
+    render(<MealPlanGrid />);
+
+    expect(screen.getByTestId("meal-type-label-morning meal")).toHaveTextContent(
+      "Morning Meal",
+    );
+    expect(screen.getByTestId("meal-type-label-midday")).toHaveTextContent("Midday");
+    expect(screen.getByTestId("meal-type-label-main meal")).toHaveTextContent(
+      "Main Meal",
+    );
+    expect(screen.queryByTestId("meal-type-label-breakfast")).not.toBeInTheDocument();
+  });
+
   it("fetches meal plan data keyed by week offset", () => {
     render(<MealPlanGrid />);
 

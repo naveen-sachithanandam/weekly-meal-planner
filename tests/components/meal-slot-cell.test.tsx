@@ -99,4 +99,19 @@ describe("MealSlotCell", () => {
     expect(screen.getByLabelText(/meal name/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Sambar rice" })).not.toBeInTheDocument();
   });
+
+  it("enters editing when Edit meal is clicked on a filled slot", () => {
+    render(
+      <MealSlotCell
+        slot={buildSlot()}
+        mealType={mealTypeByName("Lunch")}
+        date="2026-05-12"
+        isPast={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit meal" }));
+
+    expect(screen.getByLabelText(/meal name/i)).toBeInTheDocument();
+  });
 });

@@ -92,6 +92,39 @@ describe("MealSlotEditing", () => {
     expect(onCancel).not.toHaveBeenCalled();
   });
 
+  it("PATCHes an existing meal slot when slotId is provided", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ id: "slot-1", mealName: "Prawn masala" }), {
+        status: 200,
+      }),
+    );
+
+    renderEditing({
+      slotId: "slot-1",
+      initialMealName: "Dal rice",
+      initialIsToddlerAppropriate: true,
+    });
+
+    fireEvent.change(screen.getByLabelText(/meal name/i), {
+      target: { value: "Prawn masala" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith("/api/meal-slots/slot-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mealName: "Prawn masala",
+          isToddlerAppropriate: true,
+        }),
+      });
+    });
+
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
   it("shows API error message when save fails", async () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ error: "Cannot modify meal slots for past days" }), {

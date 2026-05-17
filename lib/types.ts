@@ -34,3 +34,14 @@ export type MealPlanResponse = {
   mealTypes: MealPlanMealType[];
   days: MealPlanDay[];
 };
+
+export type MealTypeConfig = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+
+export type MealTypesResponse = {
+  mealTypes: MealTypeConfig[];
+};

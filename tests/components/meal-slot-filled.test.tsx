@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MealSlotFilled } from "../../components/meal-plan-grid/meal-slot-cell/meal-slot-filled";
 import type { MealPlanIngredient } from "../../lib/types";
@@ -73,5 +73,77 @@ describe("MealSlotFilled", () => {
 
     expect(screen.getByText("Ingredients unavailable. Add manually.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument();
+  });
+
+  describe("tile actions (AC-010)", () => {
+    beforeEach(() => {
+      onMutate.mockResolvedValue(undefined);
+      vi.stubGlobal("fetch", vi.fn());
+      vi.stubGlobal("confirm", vi.fn());
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("shows Edit meal and Delete meal buttons with accessible labels", () => {
+      renderFilled();
+
+      expect(screen.getByRole("button", { name: "Edit meal" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Delete meal" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Edit ingredients" })).toBeInTheDocument();
+    });
+
+    it("calls onStartEditing when Edit meal is clicked", () => {
+      renderFilled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Edit meal" }));
+
+      expect(onStartEditing).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not delete when confirmation is cancelled", async () => {
+      vi.mocked(window.confirm).mockReturnValue(false);
+      renderFilled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete meal" }));
+
+      expect(window.confirm).toHaveBeenCalledWith("Remove this meal?");
+      expect(fetch).not.toHaveBeenCalled();
+      expect(onMutate).not.toHaveBeenCalled();
+    });
+
+    it("DELETEs the slot and calls onMutate when confirmed", async () => {
+      vi.mocked(window.confirm).mockReturnValue(true);
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }));
+      renderFilled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete meal" }));
+
+      await waitFor(() => {
+        expect(fetch).toHaveBeenCalledWith("/api/meal-slots/slot-1", {
+          method: "DELETE",
+        });
+      });
+      expect(onMutate).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows an error when DELETE fails", async () => {
+      vi.mocked(window.confirm).mockReturnValue(true);
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(JSON.stringify({ error: "Cannot delete past meals" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+      renderFilled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete meal" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Cannot delete past meals",
+      );
+      expect(onMutate).not.toHaveBeenCalled();
+    });
   });
 });

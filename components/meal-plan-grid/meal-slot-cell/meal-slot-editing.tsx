@@ -5,6 +5,9 @@ import { useState } from "react";
 type MealSlotEditingProps = {
   date: string;
   mealTypeConfigId: string;
+  slotId?: string;
+  initialMealName?: string;
+  initialIsToddlerAppropriate?: boolean;
   onSaved: () => void | Promise<unknown>;
   onCancel: () => void;
 };
@@ -12,11 +15,16 @@ type MealSlotEditingProps = {
 export function MealSlotEditing({
   date,
   mealTypeConfigId,
+  slotId,
+  initialMealName = "",
+  initialIsToddlerAppropriate = false,
   onSaved,
   onCancel,
 }: MealSlotEditingProps) {
-  const [mealName, setMealName] = useState("");
-  const [isToddlerAppropriate, setIsToddlerAppropriate] = useState(false);
+  const [mealName, setMealName] = useState(initialMealName);
+  const [isToddlerAppropriate, setIsToddlerAppropriate] = useState(
+    initialIsToddlerAppropriate,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,16 +40,19 @@ export function MealSlotEditing({
     setError(null);
 
     try {
-      const response = await fetch("/api/meal-slots", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date,
-          mealTypeConfigId,
-          mealName: trimmed,
-          isToddlerAppropriate,
-        }),
-      });
+      const isUpdate = slotId !== undefined;
+      const response = await fetch(
+        isUpdate ? `/api/meal-slots/${slotId}` : "/api/meal-slots",
+        {
+          method: isUpdate ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...(isUpdate ? {} : { date, mealTypeConfigId }),
+            mealName: trimmed,
+            isToddlerAppropriate,
+          }),
+        },
+      );
 
       if (!response.ok) {
         const body = (await response.json()) as { error?: string };

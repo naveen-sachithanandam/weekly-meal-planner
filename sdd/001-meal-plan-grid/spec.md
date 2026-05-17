@@ -13,9 +13,14 @@ or rebuilding the plan from scratch each week.
 ### Success criteria
 1. A user can view the full 7-day grid for the current week in one
    screen load. The number and names of meal rows are driven by the
-   household's active meal type configuration, not hardcoded.
+   household's active meal type configuration, not hardcoded. Each meal
+   type row is labeled with its configured name (e.g. Breakfast, Lunch,
+   Dinner) so the user can see which slot they are editing at a glance —
+   either as a row title for the whole week or on every cell in that row.
 2. A user can assign, change, or clear any meal slot with inline
-   editing directly on the grid cell.
+   editing directly on the grid cell. Filled slots show explicit **Edit**
+   and **Delete** controls on the tile (not only click-to-edit on the meal
+   name). Delete clears the slot and returns it to the empty state.
 3. Family rules are enforced at entry — a slot that violates a
    rule cannot be saved without an explicit override.
 4. The plan persists across browser sessions and devices
@@ -99,7 +104,9 @@ Not an app user. Affects the meal plan as a constraint:
 
 ### Journey 1 — Planning the week
 The Planner opens the app on Sunday. The grid shows the
-current week with all empty slots. They work through each
+current week with all empty slots. Row labels (Breakfast, Lunch,
+Dinner, and any other active meal types) are visible so they can
+scan down a meal type across the week. They work through each
 day — typing a meal name into a slot and confirming it.
 The slot saves immediately and shows a loading indicator
 while Ollama generates ingredient suggestions in the
@@ -109,12 +116,14 @@ meal is toddler-appropriate. The Planner reviews and
 approves or edits the ingredient list before moving on.
 
 ### Journey 2 — Changing a plan mid-week
-It's Wednesday. The Planner edits Thursday's dinner inline
-with a new meal name and confirms. The slot saves immediately.
+It's Wednesday. The Planner taps **Edit** on Thursday's dinner tile,
+changes the meal name, and confirms. The slot saves immediately.
 Ollama re-runs for the new meal — the previous ingredient
 list is discarded and replaced with fresh suggestions.
+If plans change entirely, they tap **Delete**, confirm, and the tile
+returns to empty with no meal or ingredients stored.
 Monday and Tuesday slots are visible but locked — greyed
-out, non-interactive.
+out, non-interactive, with no Edit or Delete controls.
 
 ### Journey 3 — Planning next week in advance
 It's Friday. The Planner clicks the next week chevron on the weekly
@@ -162,6 +171,7 @@ And the user can add ingredients manually or retry later
 Given any calendar day before today (yesterday and earlier)
 When the user attempts to interact with any meal slot on that day
 Then the slot is non-interactive and shows no edit controls
+And no **Edit** or **Delete** actions are shown on the tile
 And the meal name is displayed as read-only text
 Note: today and all future days remain fully editable regardless
 of time of day.
@@ -196,13 +206,51 @@ Then the previous ingredient list is discarded
 And Ollama re-runs for the new meal name
 And the slot follows the same async ingredient flow as AC-001/002
 
+### AC-009 — Meal type name visible on every row
+Given the meal plan grid is rendered for any week view
+Then each row for an active meal type displays that type's configured
+name (`MealTypeConfig.name`) as visible UI text — not only in test hooks
+or aria labels
+And the user can tell which meal type a slot belongs to without opening
+the cell (e.g. a row-title column for the whole week, or the meal type
+name shown on every slot in that row)
+And the number of labeled rows matches the active meal types returned by
+the meal plan API
+And when meal types are renamed or reordered via Feature 002, row labels
+and row order on the grid update on next load to match
+
+Note: This criterion labels the **meal type** (Breakfast, Lunch, etc.).
+The user-entered **meal name** (e.g. "Sambar rice") is shown inside each
+slot per AC-001 and AC-004.
+
+### AC-010 — Edit and Delete on filled meal tiles
+Given a meal slot is filled on today or a future day
+Then the tile shows visible **Edit** and **Delete** controls (buttons or
+icon buttons with accessible labels)
+And **Edit** opens the same inline form as adding a meal (meal name +
+toddler-appropriate question) without requiring the user to discover
+click-to-edit on the meal name alone
+And **Delete** clears the slot via `DELETE /api/meal-slots/[id]`, removes
+the meal and ingredients, and returns the tile to the empty "+ Add meal"
+state after SWR revalidation
+And **Delete** asks for confirmation before calling the API (e.g. "Remove
+this meal?") so accidental taps do not clear plans
+And past-day filled slots show neither **Edit** nor **Delete** (see AC-004)
+
+Note: **Edit** on the ingredient list (approve, add, or change individual
+ingredients) is separate from **Edit** on the meal tile, which changes the
+meal name and toddler flag.
+
 ---
 
 ## Assumptions and Dependencies
 
 ### Assumptions
-1. The app runs on a single household's local network.
-   There is no internet dependency for core functionality.
+1. The app runs in a Docker container on a home Mac Mini, accessible
+   over the local network. There is no internet dependency for core
+   functionality. Ollama runs on the host (not in Docker) and is
+   reached by the container via `host.docker.internal`. The SQLite
+   database is persisted on a Docker named volume.
 
 2. The database is SQLite via Prisma. It is always available
    when the app is running.

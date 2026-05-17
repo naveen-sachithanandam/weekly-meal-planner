@@ -9,6 +9,39 @@ later tasks depend on earlier ones. Do not skip ahead.
 
 ---
 
+## T000 — Docker setup
+
+**Implements:** plan.md §8
+**Files:** `Dockerfile`, `docker-compose.yml`, `.dockerignore`
+
+Create a multi-stage `Dockerfile` exactly as specified in plan.md §8:
+stage 1 (deps), stage 2 (builder — runs `prisma generate` and `npm run build`),
+stage 3 (runner — copies `.next/standalone`, static assets, prisma client).
+
+Create `docker-compose.yml` with a single `app` service:
+- Binds port 3000.
+- Loads `.env.local` via `env_file`.
+- Overrides `DATABASE_URL` to `file:/data/meal-planner.db`.
+- Overrides `OLLAMA_HOST` to `http://host.docker.internal:11434`.
+- Mounts a named volume `meal-db` at `/data`.
+- Adds `extra_hosts: host.docker.internal:host-gateway` for Linux compatibility.
+- Sets `restart: unless-stopped`.
+
+Create `.dockerignore` excluding `node_modules`, `.next`, `*.db`, `.env.local`.
+
+**Done when:**
+- `docker compose build` completes without error.
+- `docker compose up` starts the container.
+- App is accessible at `http://localhost:3000` from the host.
+- Stopping and restarting the container does not lose database data (volume persists).
+- `OLLAMA_HOST` resolves correctly from inside the container.
+
+**Do not:** add Ollama as a Docker service. It runs on the host only.
+**Do not:** copy `.env.local` into the image — inject it at runtime via `env_file`.
+**Do not:** use `next.config.js output: 'export'` — use `output: 'standalone'` for Docker.
+
+---
+
 ## T001 — Environment setup
 
 **Implements:** plan.md §7
@@ -23,7 +56,8 @@ OLLAMA_MODEL=
 DATABASE_URL=
 ```
 
-Create `.env.local` (gitignored) with real values for local development:
+Create `.env.local` (gitignored) with real values for local development
+(bare `npm run dev`, not Docker):
 
 ```
 HOME_TIMEZONE=America/Toronto
@@ -31,6 +65,10 @@ OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=llama3
 DATABASE_URL=file:./dev.db
 ```
+
+Note: when running via Docker, `docker-compose.yml` overrides `DATABASE_URL`
+to `file:/data/meal-planner.db` (the volume path) and `OLLAMA_HOST` to
+`http://host.docker.internal:11434`. The `.env.local` values are for local dev only.
 
 Add a startup check in `lib/config.ts` that reads these variables and
 throws a clear error at boot if any required variable is missing.
@@ -331,6 +369,8 @@ Create `DayColumn`:
 - Receives a `day` object and a `mealTypes[]` array (from the API response).
 - Renders `<DayHeader>` and one `<MealSlotCell>` per entry in `mealTypes[]`,
   in sort order. Never hardcode BREAKFAST / LUNCH / DINNER.
+- Meal type names must be visible on the grid (spec AC-009): either a shared
+  row-label column in `MealPlanGrid` or a label on each slot in the row.
 - Matches each `mealType` to the corresponding slot in `day.slots[]` by
   `mealTypeConfigId` — renders empty state if no slot exists for that type.
 - If `day.isPast`, renders with a greyed-out style.
@@ -345,6 +385,7 @@ Create `DayHeader`:
 
 **Done when:**
 - Each day column renders the correct number of meal rows based on `mealTypes[]`.
+- Each row shows the meal type name (Breakfast, Lunch, etc.) as visible text — row-title column or per-cell label (AC-009).
 - Adding a 4th meal type in the DB causes a 4th row to appear without code changes.
 - Past days are visually distinct (greyed out).
 - Toddler indicator appears on weekends and override days.
@@ -372,8 +413,8 @@ Create `MealSlotCell` as the orchestrator component:
 **Done when:**
 - Past day cells are non-interactive and show read-only text.
 - Empty cells show the empty state.
-- Filled cells show the filled state.
-- Clicking a filled cell enters editing state.
+- Filled cells show the filled state with explicit Edit and Delete (AC-010).
+- Edit opens editing state; Delete is handled in `MealSlotFilled` (not here).
 
 **Do not:** put any API call logic in this component — delegate to children.
 
@@ -415,7 +456,10 @@ Create `MealSlotEditing`:
 
 Create `MealSlotFilled`:
 - Displays meal name.
-- Clicking the meal name calls `onStartEditing()` prop.
+- Renders explicit **Edit** and **Delete** controls on the tile (AC-010).
+  Edit calls `onStartEditing()`. Delete shows a confirm prompt, then
+  `DELETE /api/meal-slots/[id]`, then `onMutate()`. Meal name may also
+  be clickable as a shortcut to edit.
 - Below the name: renders `<IngredientLoading>` if `ingredientsStatus === 'PENDING'`,
   an error message if `FAILED` or `EMPTY`, or `<IngredientList>` if `READY`.
 
@@ -431,10 +475,12 @@ Create `IngredientList`:
 - Manual add: simple text input to add an ingredient by name.
 
 **Done when:**
+- Filled tiles show visible Edit and Delete; Delete clears slot after confirm.
 - PENDING slots show the spinner.
 - READY slots show the ingredient list with approve checkboxes.
 - FAILED/EMPTY slots show the unavailable message with manual add option.
 - Approving an ingredient calls the correct API route.
+- Ingredient-list Edit is distinct from tile Edit (meal name / delete slot).
 
 ---
 
@@ -465,4 +511,6 @@ from `spec.md` manually:
 - [ ] AC-006 — Toddler home day flagging shows conflicts and prompts review
 - [ ] AC-007 — Sunday is always first column
 - [ ] AC-008 — Editing meal name discards ingredients and re-runs Ollama
+- [x] AC-009 — Meal type name visible on every row (row-title column or per-cell label)
+- [x] AC-010 — Filled tiles show Edit and Delete; Delete confirms then clears slot
 - [ ] AC-005 — Prev/next chevrons on WeekNav date range navigate weeks; disabled at boundaries

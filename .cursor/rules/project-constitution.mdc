@@ -27,16 +27,25 @@ any Ollama prompts and meal examples.
 
 ## 2. Tech Stack
 
-| Layer         | Choice                        |
-|---------------|-------------------------------|
-| Framework     | Next.js 15 (App Router)       |
-| Language      | TypeScript 5                  |
-| UI            | React 19 + Tailwind CSS       |
-| Data access   | Prisma ORM                    |
-| Database      | SQLite                        |
-| Data fetching | SWR                           |
-| Date handling | date-fns + date-fns-tz        |
-| AI            | Ollama (local, home network)  |
+| Layer         | Choice                                      |
+|---------------|---------------------------------------------|
+| Framework     | Next.js 15 (App Router)                     |
+| Language      | TypeScript 5                                |
+| UI            | React 19 + Tailwind CSS                     |
+| Data access   | Prisma ORM                                  |
+| Database      | SQLite (volume-mounted in Docker)           |
+| Data fetching | SWR                                         |
+| Date handling | date-fns + date-fns-tz                      |
+| AI            | Ollama (runs on host, not inside Docker)    |
+| Runtime       | Docker + Docker Compose                     |
+
+**Docker deployment model:**
+- The Next.js app runs in a Docker container (multi-stage build).
+- Ollama runs on the **host Mac Mini** (not in Docker — it needs hardware access).
+  Inside the container, `OLLAMA_HOST` is set to `http://host.docker.internal:11434`.
+- SQLite database is persisted via a named Docker volume — never inside the image.
+- Environment variables are injected via `docker-compose.yml` from a `.env.local` file
+  (gitignored). The same `.env.example` template applies for both Docker and bare dev.
 
 Do not introduce new dependencies without a spec note explaining why.
 
@@ -69,7 +78,7 @@ These invariants apply to every feature, every file, every task.
 6. **Toddler is a constraint, not a user.**
    The toddler has no account, no persona in the UI, no direct interaction.
    Her schedule (daycare Mon–Fri, home Sat–Sun) is hardcoded in the rules
-   engine. Day-level overrides are stored in the database.
+   engine. Day-level overrides are stored in the database. 
 
 7. **No authentication.**
    The app assumes a trusted home network. There are no login screens,
@@ -110,3 +119,5 @@ These invariants apply to every feature, every file, every task.
 - **Never invent family rules** — rules are defined in Feature 002. Do not hardcode meal constraints outside the rules engine.
 - **Never hardcode household context** — no cuisine strings, timezones, or Ollama URLs/models in source. Use `lib/env.ts`.
 - **Never expand scope beyond the current task** — implement exactly what the task describes, no more.
+- **Never put Ollama in Docker** — Ollama runs on the host. The container reaches it via `host.docker.internal`. Do not add an Ollama service to `docker-compose.yml`.
+- **Never store the SQLite database inside the Docker image** — the database path must always point to a mounted volume so data persists across container restarts.
