@@ -296,6 +296,84 @@ Labels come from `mealTypes[]` on the meal plan response. Do not hardcode Breakf
 
 Only one cell can be expanded at a time — this is enforced at `MealPlanGrid` level via `expandedSlotId`. Past-day cells are always compact and non-interactive (no expand, no Edit, no Delete).
 
+**Cell state wireframes:**
+
+```
+EMPTY — future day
+┌──────────────────────────────────┐
+│  + Add meal                      │
+└──────────────────────────────────┘
+
+EDITING — future day (inline form)
+┌──────────────────────────────────┐
+│  [Chana masala_______________]   │
+│  ☑  Toddler-appropriate?         │
+│  [Confirm]   [Cancel]            │
+└──────────────────────────────────┘
+
+FILLED — compact (collapsed, default)
+┌──────────────────────────────────┐
+│  Sambar rice       [●4]  [✎][✕] │
+└──────────────────────────────────┘
+
+FILLED — expanded (click header to open)
+┌──────────────────────────────────┐
+│  Sambar rice       [●4]  [✎][✕] │
+├──────────────────────────────────┤
+│  ☑  Toor dal                     │
+│  ☑  Tamarind                     │
+│  ☑  Tomatoes                     │
+│  ☐  Green chillies               │
+│  [__________________]  [+ Add]   │
+└──────────────────────────────────┘
+
+PENDING — compact (Ollama generating)
+┌──────────────────────────────────┐
+│  Idli                [⟳]  [✎][✕]│
+└──────────────────────────────────┘
+
+PENDING — expanded (spinner inside section)
+┌──────────────────────────────────┐
+│  Idli                [⟳]  [✎][✕]│
+├──────────────────────────────────┤
+│  ⟳  Generating ingredients…      │
+└──────────────────────────────────┘
+
+FAILED / EMPTY — expanded (manual add fallback)
+┌──────────────────────────────────┐
+│  Baingan bharta      [⚠]  [✎][✕]│
+├──────────────────────────────────┤
+│  ⚠  Ingredients unavailable.     │
+│  [__________________]  [+ Add]   │
+└──────────────────────────────────┘
+
+PAST DAY — read-only, no controls, no expand
+┌──────────────────────────────────┐
+│  Rajma chawal        [●5]        │  ← greyed (opacity 0.45)
+└──────────────────────────────────┘
+```
+
+**Grid layout wireframe (week view, 3 meal types, current week):**
+
+```
+          ‹   May 10 – May 16   ›   [This week]
+
+          SUN 10       MON 11       TUE 12   ...  SAT 16
+          [🧒 home]                                [🧒 home]
+          ─────────────────────────────────────────────────
+Breakfast │ Idli [●4] │ Oats [●3] │ + Add   │ │ Rava dosa  │
+          │  (past)   │  (past)   │ (past)  │ │ [●3][✎][✕] │ ← today
+          │           │           │         │ │ ☑ Semolina  │ ← expanded
+          │           │           │         │ │ ☑ Rice flour│
+          ─────────────────────────────────────────────────
+Lunch     │  (past)   │  (past)   │ (past)  │ │ [editing…] │
+          ─────────────────────────────────────────────────
+Dinner    │ Rajma[●5] │  (past)   │ (past)  │ │ Bharta [⚠] │
+          ─────────────────────────────────────────────────
+```
+
+See `sdd/001-meal-plan-grid/mockup-meal-slot.html` for an interactive rendered version.
+
 **Design language — warm/homely palette:**
 
 The UI should feel like a handwritten planner, not a productivity dashboard. Use these CSS custom properties (define in `globals.css`):
