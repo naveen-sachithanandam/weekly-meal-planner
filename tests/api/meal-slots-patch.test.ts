@@ -32,8 +32,10 @@ function mockOllamaAvailable(generateResponse = "prawns, masala, oil") {
     "fetch",
     vi.fn(async (url: string | URL, init?: RequestInit) => {
       const href = url.toString();
-      if (href === VALID_ENV.OLLAMA_HOST) {
-        return new Response(null, { status: 200 });
+      if (href === `${VALID_ENV.OLLAMA_HOST}/api/tags`) {
+        return Response.json({
+          models: [{ name: `${VALID_ENV.OLLAMA_MODEL}:latest` }],
+        });
       }
       if (href === `${VALID_ENV.OLLAMA_HOST}/api/generate`) {
         return Response.json({ response: generateResponse });
@@ -161,6 +163,41 @@ describe("PATCH /api/meal-slots/[id]", () => {
         "spices",
       ]);
     });
+  });
+
+  it("sets EMPTY without calling generate when Ollama is unreachable on rename", async () => {
+    mockOllamaUnreachable();
+
+    const prisma = getTestPrisma();
+    const dinnerId = await getLegacyMealTypeConfigId(prisma, "DINNER");
+    const slot = await prisma.mealSlot.create({
+      data: {
+        date: "2026-05-15",
+        mealTypeConfigId: dinnerId,
+        mealName: "Dal rice",
+        isToddlerAppropriate: true,
+        ingredientsStatus: "READY",
+        ingredients: {
+          create: [{ name: "toor dal", approved: true }],
+        },
+      },
+    });
+
+    const response = await patchMealSlot(slot.id, { mealName: "Prawn masala" });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      mealName: "Prawn masala",
+      ingredientsStatus: "EMPTY",
+      ingredients: [],
+    });
+
+    const fetchMock = vi.mocked(fetch);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]?.toString()).toBe(
+      `${VALID_ENV.OLLAMA_HOST}/api/tags`,
+    );
   });
 
   it("does not re-run Ollama when the meal name is unchanged", async () => {

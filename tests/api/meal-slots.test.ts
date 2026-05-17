@@ -49,8 +49,10 @@ function mockOllamaAvailable(options?: {
     "fetch",
     vi.fn(async (url: string | URL, init?: RequestInit) => {
       const href = url.toString();
-      if (href === VALID_ENV.OLLAMA_HOST) {
-        return new Response(null, { status: 200 });
+      if (href === `${VALID_ENV.OLLAMA_HOST}/api/tags`) {
+        return Response.json({
+          models: [{ name: `${VALID_ENV.OLLAMA_MODEL}:latest` }],
+        });
       }
       if (href === `${VALID_ENV.OLLAMA_HOST}/api/generate`) {
         if (delayGenerate) {
@@ -81,7 +83,7 @@ describe("POST /api/meal-slots", () => {
     vi.resetModules();
   });
 
-  it("saves a new meal slot for today when Ollama is unavailable", async () => {
+  it("AC-003: saves a new meal slot for today when Ollama is unavailable", async () => {
     const response = await postLegacyMealSlot("DINNER", {
       date: "2026-05-14",
       mealName: "Dal rice",
@@ -169,7 +171,7 @@ describe("POST /api/meal-slots", () => {
     });
   });
 
-  it("returns the saved slot before ingredient generation finishes", async () => {
+  it("AC-001/002: returns the saved slot before ingredient generation finishes", async () => {
     let releaseGenerate: (() => void) | undefined;
     const generateGate = new Promise<void>((resolve) => {
       releaseGenerate = resolve;

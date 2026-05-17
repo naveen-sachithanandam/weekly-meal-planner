@@ -263,7 +263,8 @@ components/
 **State ownership:**
 - Week offset (0 = current, 1 = next, -1 = previous) — local state in `meal-plan-grid.tsx`.
 - Week data (slots, toddler overrides, isPast flags) — SWR cache, keyed by week Sunday date.
-- Editing state (which cell is open) — local state in `meal-slot-cell.tsx`.
+- Editing state (which cell is in name-entry form) — local state in `meal-slot-cell.tsx`.
+- Expanded ingredient section (`expandedSlotId: string | null`) — local state in `meal-plan-grid.tsx`. Only one cell may be expanded at a time. `MealPlanGrid` passes `isExpanded` and `onToggle(slotId)` down through `DayColumn` → `MealSlotCell` → `MealSlotFilled`. When a second cell is toggled open, `MealPlanGrid` sets `expandedSlotId` to that cell's id (collapsing the first automatically).
 
 **WeekNav layout:** The weekly date range label is the primary navigation surface. Prev (`‹`) and next (`›`) chevrons sit on either side of the date range string. A separate "This week" button resets `weekOffset` to 0. Prev chevron disabled when `weekOffset === -1`. Next chevron disabled when `weekOffset === 1`.
 
@@ -274,12 +275,58 @@ components/
 
 Labels come from `mealTypes[]` on the meal plan response. Do not hardcode Breakfast/Lunch/Dinner strings. When Feature 002 renames or reorders types, labels and row order follow `mealTypes[]` on the next fetch.
 
-**Filled tile actions (spec AC-010):** Each non-past filled `MealSlotCell` renders a small action row on the tile:
+**Filled tile actions and collapsible ingredient section (spec AC-010):**
 
-- **Edit** — calls `onStartEditing()` (same as opening `MealSlotEditing`).
-- **Delete** — confirm dialog, then `DELETE /api/meal-slots/[id]`, then `onMutate()`.
+`MealSlotFilled` has two layers:
 
-Place actions in the tile header (e.g. top-right of `MealSlotFilled`) so they are always visible. The meal name may remain clickable for edit as a shortcut, but must not be the only affordance. Ingredient-list **Edit** edits ingredients only, not the meal name.
+**Compact header (always visible):**
+- Meal name on the left.
+- Status badge on the right: ingredient count chip (READY), animated spinner chip (PENDING), warning chip (FAILED/EMPTY).
+- **Edit** and **Delete** icon buttons in the top-right corner (always visible, not hidden behind expand).
+  - Edit calls `onStartEditing()`.
+  - Delete shows a confirmation prompt, then `DELETE /api/meal-slots/[id]`, then `onMutate()`.
+- Clicking anywhere on the compact header (other than Edit/Delete) toggles the ingredient section open or closed by calling `onToggle(slot.id)`.
+
+**Collapsible ingredient section (visible when `isExpanded === true`):**
+- Expands inline below the compact header — no drawer, no modal, no separate panel.
+- Shows the full ingredient list with approve checkboxes.
+- Shows `<IngredientLoading>` if status is PENDING, an error state with manual-add if FAILED/EMPTY.
+- Ingredient-list Edit edits ingredients only (not the meal name).
+- CSS: use a smooth `max-height` or `grid-rows` transition; keep the cell width fixed so adjacent columns do not shift.
+
+Only one cell can be expanded at a time — this is enforced at `MealPlanGrid` level via `expandedSlotId`. Past-day cells are always compact and non-interactive (no expand, no Edit, no Delete).
+
+**Design language — warm/homely palette:**
+
+The UI should feel like a handwritten planner, not a productivity dashboard. Use these CSS custom properties (define in `globals.css`):
+
+```css
+:root {
+  --color-base:        #fdfaf6; /* page background — warm linen */
+  --color-surface:     #fdf6ee; /* card / column header background */
+  --color-border:      #ede5d8; /* cell borders, dividers */
+  --color-text:        #3d2c1e; /* primary text — warm near-black */
+  --color-text-muted:  #8a7060; /* secondary labels, muted dates */
+  --color-accent:      #c17f3a; /* amber — interactive elements, focus rings */
+  --color-accent-soft: #fdf0de; /* amber fill for hover states */
+
+  /* Status badges */
+  --badge-ready-bg:    #eaf4e0;
+  --badge-ready-text:  #3d6b1a;
+  --badge-pending-bg:  #e8f0fc;
+  --badge-pending-text:#3355a0;
+  --badge-warn-bg:     #fce8e8;
+  --badge-warn-text:   #a02020;
+
+  /* Toddler home indicator */
+  --toddler-bg:        #fff3e0;
+  --toddler-text:      #a05a1a;
+}
+```
+
+Cells: `border-radius: 0.75rem`, subtle `box-shadow: 0 1px 3px rgba(61,44,30,0.08)`. Past-day cells use `opacity: 0.45` and `pointer-events: none`. Transitions on expand/collapse: `150ms ease-out`. Font: system sans-serif stack — no web fonts required.
+
+Do not use Tailwind's default gray/blue color classes for any surface, text, or badge — map everything through the CSS variables above.
 
 **SWR polling:** While any slot in the current week has `ingredientsStatus === "PENDING"`, SWR refreshes every 3 seconds. Polling stops when all slots are `READY`, `FAILED`, or `EMPTY`.
 

@@ -347,15 +347,23 @@ Create `WeekNav`:
 - Next chevron disabled when `weekOffset === 1` (newest allowed week).
 - Date range string updates to reflect the current weekOffset.
 
+Also add the design language CSS variables to `app/globals.css` (see plan.md §3
+Design Language section). Define all `--color-*`, `--badge-*`, and `--toddler-*`
+custom properties on `:root`. These variables are the single source of truth for
+all colour decisions across every component in this feature.
+
 **Done when:**
 - Grid renders 7 columns for the current week.
 - Clicking `‹` / `›` navigates to the correct week and updates the date range label.
 - "This week" returns to offset 0.
 - Prev chevron is disabled at `weekOffset === -1`; next at `weekOffset === 1`.
 - SWR polls every 3s when any slot is PENDING, stops when all resolved.
+- `globals.css` contains all CSS variables from plan.md §3 design language.
+- Grid background uses `--color-base`; day column headers use `--color-surface`.
 
 **Do not:** fetch data with `useEffect` + `fetch`. Use SWR only.
 **Do not:** put week navigation controls anywhere other than `WeekNav`.
+**Do not:** use raw hex values or default Tailwind grey/blue classes for surfaces or text — use the CSS variables.
 
 ---
 
@@ -399,24 +407,34 @@ Create `DayHeader`:
 
 ## T013 — MealSlotCell
 
-**Implements:** plan.md §3 — MealSlotCell orchestrator, spec AC-001/AC-004
-**Files:** `components/meal-plan-grid/meal-slot-cell/meal-slot-cell.tsx`
+**Implements:** plan.md §3 — MealSlotCell orchestrator, spec AC-001/AC-004/AC-010
+**Files:** `components/meal-plan-grid/meal-slot-cell/meal-slot-cell.tsx`,
+           `components/meal-plan-grid/meal-plan-grid.tsx` (add expandedSlotId state)
 
-Create `MealSlotCell` as the orchestrator component:
-- Receives a `slot` object (or null for empty) and `isPast`.
-- If `isPast`: render the meal name as read-only text. No controls.
+**Add to `MealPlanGrid`:**
+- Add `expandedSlotId: string | null` state (default `null`).
+- Add `handleToggleExpand(slotId: string)` — sets `expandedSlotId` to `slotId`
+  if it is not currently expanded; sets it to `null` if it is (toggle).
+- Pass `expandedSlotId` and `onToggleExpand` down through `DayColumn` → `MealSlotCell`.
+
+**Create `MealSlotCell`** as the orchestrator component:
+- Receives: `slot` (or null), `isPast`, `isExpanded`, `onToggle`.
+- If `isPast`: render the meal name as compact read-only text. No controls, no expand.
 - If slot is null: render `<MealSlotEmpty>`.
-- If slot exists and `isEditing` state is true: render `<MealSlotEditing>`.
-- If slot exists and not editing: render `<MealSlotFilled>`.
+- If slot exists and `isEditing` local state is true: render `<MealSlotEditing>`.
+- If slot exists and not editing: render `<MealSlotFilled isExpanded={isExpanded} onToggle={() => onToggle(slot.id)} />`.
 - `isEditing` is local state, default false.
 
 **Done when:**
-- Past day cells are non-interactive and show read-only text.
+- Past day cells are non-interactive and show read-only text only.
 - Empty cells show the empty state.
-- Filled cells show the filled state with explicit Edit and Delete (AC-010).
-- Edit opens editing state; Delete is handled in `MealSlotFilled` (not here).
+- Clicking a filled cell expands its ingredient section; clicking again collapses it.
+- Clicking a second filled cell collapses the first and expands the second.
+- Edit/Delete actions visible on filled tiles on today and future days (AC-010).
+- Edit opens editing state; Delete is handled in `MealSlotFilled`.
 
 **Do not:** put any API call logic in this component — delegate to children.
+**Do not:** manage `expandedSlotId` inside `MealSlotCell` — it lives in `MealPlanGrid`.
 
 ---
 
@@ -449,38 +467,53 @@ Create `MealSlotEditing`:
 
 ## T015 — MealSlotFilled + IngredientList + IngredientLoading
 
-**Implements:** plan.md §3, spec AC-002/AC-003
+**Implements:** plan.md §3, spec AC-002/AC-003/AC-010
 **Files:** `components/meal-plan-grid/meal-slot-cell/meal-slot-filled.tsx`,
            `components/meal-plan-grid/meal-slot-cell/ingredient-list.tsx`,
            `components/meal-plan-grid/meal-slot-cell/ingredient-loading.tsx`
 
 Create `MealSlotFilled`:
-- Displays meal name.
-- Renders explicit **Edit** and **Delete** controls on the tile (AC-010).
-  Edit calls `onStartEditing()`. Delete shows a confirm prompt, then
-  `DELETE /api/meal-slots/[id]`, then `onMutate()`. Meal name may also
-  be clickable as a shortcut to edit.
-- Below the name: renders `<IngredientLoading>` if `ingredientsStatus === 'PENDING'`,
-  an error message if `FAILED` or `EMPTY`, or `<IngredientList>` if `READY`.
+
+Props: `slot`, `isExpanded: boolean`, `onToggle: () => void`, `onStartEditing: () => void`, `onMutate: () => void`.
+
+**Compact header (always rendered):**
+- Meal name on the left.
+- Status badge on the right: ingredient count chip (READY), animated spinner chip
+  (PENDING), warning chip (FAILED/EMPTY). Use CSS variables from plan.md §3
+  design language (--badge-ready-bg, --badge-pending-bg, --badge-warn-bg).
+- **Edit** and **Delete** icon buttons in the header top-right (always visible).
+  - Edit calls `onStartEditing()`.
+  - Delete shows an inline confirmation ("Remove this meal?"), then
+    `DELETE /api/meal-slots/[id]`, then `onMutate()`.
+- Clicking the compact header area (not Edit/Delete) calls `onToggle()`.
+
+**Collapsible ingredient section (rendered only when `isExpanded`):**
+- Expand/collapse with a smooth `max-height` CSS transition (150ms ease-out).
+- If `ingredientsStatus === 'PENDING'`: render `<IngredientLoading>`.
+- If `ingredientsStatus === 'READY'`: render `<IngredientList>`.
+- If `ingredientsStatus === 'FAILED'` or `'EMPTY'`: render error state with
+  "Ingredients unavailable. Add manually." and a manual text-input.
+- Do not use a drawer, modal, or side panel — all content is inline.
 
 Create `IngredientLoading`:
-- A simple spinner with "Generating ingredients…" label.
+- A small spinner with "Generating ingredients…" label using --badge-pending-bg.
 
 Create `IngredientList`:
 - Renders each ingredient with an approve checkbox.
-- An edit button to make the list editable inline.
-- On approval change: call `PATCH /api/meal-slots/[id]/ingredients`.
-- Shows a message if `ingredientsStatus === 'FAILED'` or `EMPTY` —
-  "Ingredients unavailable. Add manually."
-- Manual add: simple text input to add an ingredient by name.
+- An inline edit toggle to rename or remove individual ingredients.
+- On change: call `PATCH /api/meal-slots/[id]/ingredients` with the full updated list.
+- Manual add: a simple text input to append a new ingredient by name.
 
 **Done when:**
-- Filled tiles show visible Edit and Delete; Delete clears slot after confirm.
-- PENDING slots show the spinner.
-- READY slots show the ingredient list with approve checkboxes.
-- FAILED/EMPTY slots show the unavailable message with manual add option.
+- Compact header always shows meal name + status badge + Edit + Delete.
+- Clicking the header body toggles the ingredient section open/closed.
+- Clicking a second cell closes the first (enforced by `expandedSlotId` in parent — no extra work needed here).
+- Delete shows confirmation before calling the API; clears slot and returns to empty state.
+- PENDING shows spinner; READY shows ingredient list; FAILED/EMPTY shows manual-add fallback.
+- Expanding a cell does not shift other day columns (fixed cell width).
 - Approving an ingredient calls the correct API route.
-- Ingredient-list Edit is distinct from tile Edit (meal name / delete slot).
+- Ingredient edit is distinct from tile Edit (the tile Edit changes meal name; ingredient edit changes the list).
+- All colours use CSS variables from plan.md §3 design language — no raw hex or default Tailwind grey/blue classes.
 
 ---
 
@@ -503,14 +536,14 @@ Replace the default Next.js home page with a simple layout that renders
 Before marking Feature 001 done, verify every acceptance criterion
 from `spec.md` manually:
 
-- [ ] AC-001 — Slot saves immediately, loading indicator appears, toddler question asked
-- [ ] AC-002 — Ingredients populate without blocking other slots
-- [ ] AC-003 — Ollama unavailable: slot saves, message shown, manual add works
-- [ ] AC-004 — Past days are non-interactive, read-only
-- [ ] AC-005 — Week navigation renders correct week, retains state
-- [ ] AC-006 — Toddler home day flagging shows conflicts and prompts review
-- [ ] AC-007 — Sunday is always first column
-- [ ] AC-008 — Editing meal name discards ingredients and re-runs Ollama
+- [x] AC-001 — Slot saves immediately, loading indicator appears, toddler question asked
+- [x] AC-002 — Ingredients populate without blocking other slots
+- [x] AC-003 — Ollama unavailable: slot saves, message shown, manual add works
+- [x] AC-004 — Past days are non-interactive, read-only
+- [x] AC-005 — Week navigation renders correct week, retains state; chevrons disabled at boundaries
+- [x] AC-006 — Toddler home day flagging shows conflicts and prompts review
+- [x] AC-007 — Sunday is always first column
+- [x] AC-008 — Editing meal name discards ingredients and re-runs Ollama
 - [x] AC-009 — Meal type name visible on every row (row-title column or per-cell label)
 - [x] AC-010 — Filled tiles show Edit and Delete; Delete confirms then clears slot
-- [ ] AC-005 — Prev/next chevrons on WeekNav date range navigate weeks; disabled at boundaries
+- [x] AC-010 (collapsible) — Compact header by default; ingredient section expands inline on click; only one cell expanded at a time; past-day cells never expand

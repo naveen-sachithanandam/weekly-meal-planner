@@ -206,6 +206,18 @@ Then the previous ingredient list is discarded
 And Ollama re-runs for the new meal name
 And the slot follows the same async ingredient flow as AC-001/002
 
+### AC-010 — Collapsible ingredient section within the cell
+Given any filled meal slot in the grid
+Then the cell displays the meal name and a status badge in compact form by default
+  (ingredient count when READY, spinner badge when PENDING, warning badge when FAILED/EMPTY)
+When the user clicks the cell
+Then an ingredient section expands inline below the meal name within that cell
+And the section shows the full ingredient list with approve checkboxes
+And edit meal and delete meal actions
+And only one cell can be expanded at a time — clicking a second cell collapses the first
+And clicking the same cell again collapses it
+And past-day cells are compact and non-interactive with no expand behaviour
+
 ### AC-009 — Meal type name visible on every row
 Given the meal plan grid is rendered for any week view
 Then each row for an active meal type displays that type's configured
