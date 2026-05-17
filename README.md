@@ -6,6 +6,7 @@ Single-household weekly meal planner (Next.js 15, SQLite, local Ollama). Built w
 
 ```bash
 cp .env.example .env.local   # edit HOME_TIMEZONE, OLLAMA_*, DATABASE_URL
+grep '^DATABASE_URL=' .env.local > .env   # Prisma IDE extension (optional)
 npm install
 npm run db:migrate
 npm run db:seed
