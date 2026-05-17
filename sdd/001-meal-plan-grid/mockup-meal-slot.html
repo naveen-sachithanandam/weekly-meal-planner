@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature 001 — Meal Slot Cell Mockup</title>
+  <style>
+    /* ─── Design tokens — must match globals.css exactly ─── */
+    :root {
+      --color-base:        #fdfaf6;
+      --color-surface:     #fdf6ee;
+      --color-border:      #ede5d8;
+      --color-text:        #3d2c1e;
+      --color-text-muted:  #8a7060;
+      --color-accent:      #c17f3a;
+      --color-accent-soft: #fdf0de;
+
+      --badge-ready-bg:    #eaf4e0;
+      --badge-ready-text:  #3d6b1a;
+      --badge-pending-bg:  #e8f0fc;
+      --badge-pending-text:#3355a0;
+      --badge-warn-bg:     #fce8e8;
+      --badge-warn-text:   #a02020;
+
+      --toddler-bg:        #fff3e0;
+      --toddler-text:      #a05a1a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--color-base);
+      color: var(--color-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      padding: 28px 32px;
+      min-width: 900px;
+    }
+
+    h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* ─── Week Nav ─── */
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .nav-btn {
+      background: none;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 5px 11px;
+      color: var(--color-text);
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      transition: background 100ms, border-color 100ms;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: var(--color-accent-soft);
+      border-color: var(--color-accent);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.32;
+      cursor: not-allowed;
+    }
+
+    .week-range {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .this-week-btn {
+      font-size: 11px;
+      padding: 4px 9px;
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    /* ─── Grid ─── */
+    .grid-scroll {
+      overflow-x: auto;
+    }
+
+    .grid {
+      display: grid;
+      /* row-label col + 7 day cols */
+      grid-template-columns: 82px repeat(7, minmax(120px, 1fr));
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--color-border); /* shows as grid lines */
+      gap: 1px;
+    }
+
+    /* ─── Day Header ─── */
+    .day-header {
+      background: var(--color-surface);
+      padding: 9px 10px 8px;
+      text-align: center;
+    }
+
+    .day-header.toddler {
+      background: var(--toddler-bg);
+    }
+
+    .day-name {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .day-date {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-top: 1px;
+    }
+
+    .day-header.today .day-date {
+      color: var(--color-accent);
+    }
+
+    .day-header.past .day-date {
+      color: var(--color-text-muted);
+    }
+
+    .toddler-chip {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--toddler-text);
+      background: rgba(160,90,26,0.12);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+
+    .row-label-header {
+      background: var(--color-surface);
+    }
+
+    /* ─── Row labels ─── */
+    .row-label {
+      background: var(--color-surface);
+      display: flex;
+      align-items: flex-start;
+      padding: 12px 8px 12px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    /* ─── Cells ─── */
+    .cell {
+      background: var(--color-base);
+      min-height: 50px;
+    }
+
+    .cell.past {
+      opacity: 0.42;
+      pointer-events: none;
+    }
+
+    /* Empty */
+    .cell-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 50px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      padding: 12px;
+      transition: background 100ms, color 100ms;
+    }
+
+    .cell-empty:hover {
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+
+    /* Filled: compact header */
+    .cell-filled {
+      cursor: pointer;
+    }
+
+    .cell-header {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 10px 8px 10px 12px;
+    }
+
+    .meal-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-ready   { background: var(--badge-ready-bg);   color: var(--badge-ready-text); }
+    .badge-pending { background: var(--badge-pending-bg); color: var(--badge-pending-text); }
+    .badge-warn    { background: var(--badge-warn-bg);    color: var(--badge-warn-text); }
+
+    .tile-actions {
+      display: flex;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 3px 5px;
+      border-radius: 4px;
+      color: var(--color-text-muted);
+      font-size: 12px;
+      line-height: 1;
+      transition: background 100ms, color 100ms;
+    }
+
+    .icon-btn:hover {
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+
+    /* Spinner animation */
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .spinner-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border: 1.5px solid var(--badge-pending-bg);
+      border-top-color: var(--badge-pending-text);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    /* Collapsible ingredient section */
+    .ingredient-section {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 150ms ease-out;
+    }
+
+    .ingredient-section.open {
+      max-height: 280px;
+    }
+
+    .ingredient-inner {
+      border-top: 1px solid var(--color-border);
+      padding: 8px 12px 10px;
+    }
+
+    .ingredient-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 3px 0;
+      font-size: 12px;
+    }
+
+    .ingredient-row input[type="checkbox"] {
+      accent-color: var(--color-accent);
+      cursor: pointer;
+    }
+
+    .add-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .add-input {
+      flex: 1;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      background: var(--color-base);
+      color: var(--color-text);
+      outline: none;
+    }
+
+    .add-input:focus {
+      border-color: var(--color-accent);
+    }
+
+    .add-btn {
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+    }
+
+    .loading-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--badge-pending-text);
+      padding: 5px 0;
+    }
+
+    .warn-row {
+      font-size: 11px;
+      color: var(--badge-warn-text);
+      padding: 4px 0 6px;
+    }
+
+    /* Editing cell */
+    .cell-editing {
+      padding: 10px 12px;
+    }
+
+    .edit-input {
+      width: 100%;
+      border: 1px solid var(--color-accent);
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 13px;
+      background: var(--color-base);
+      color: var(--color-text);
+      outline: none;
+      box-shadow: 0 0 0 2px var(--color-accent-soft);
+    }
+
+    .toddler-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+    }
+
+    .toddler-toggle input { accent-color: var(--color-accent); }
+
+    .edit-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .btn-confirm {
+      background: var(--color-accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: none;
+      color: var(--color-text-muted);
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    /* ─── Legend ─── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 24px;
+      margin-top: 18px;
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+
+    .swatch {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .note {
+      margin-top: 16px;
+      font-size: 11px;
+      color: var(--color-text-muted);
+      border-top: 1px solid var(--color-border);
+      padding-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Feature 001 — Meal Plan Grid</h1>
+  <p class="subtitle">Interactive mockup · Click any filled cell to expand/collapse its ingredient section · Click an empty cell to see the editing state</p>
+
+  <!-- Week Nav -->
+  <div class="week-nav">
+    <button class="nav-btn" disabled>‹</button>
+    <span class="week-range">May 10 – May 16</span>
+    <button class="nav-btn">›</button>
+    <button class="nav-btn this-week-btn">This week</button>
+  </div>
+
+  <!-- Grid -->
+  <div class="grid-scroll">
+    <div class="grid">
+
+      <!-- ── Header row ── -->
+      <div class="row-label-header"></div>
+
+      <div class="day-header toddler past">
+        <div class="day-name">Sun</div>
+        <div class="day-date">10</div>
+        <div><span class="toddler-chip">🧒 home</span></div>
+      </div>
+      <div class="day-header past">
+        <div class="day-name">Mon</div>
+        <div class="day-date">11</div>
+      </div>
+      <div class="day-header past">
+        <div class="day-name">Tue</div>
+        <div class="day-date">12</div>
+      </div>
+      <div class="day-header past">
+        <div class="day-name">Wed</div>
+        <div class="day-date">13</div>
+      </div>
+      <div class="day-header past">
+        <div class="day-name">Thu</div>
+        <div class="day-date">14</div>
+      </div>
+      <div class="day-header past">
+        <div class="day-name">Fri</div>
+        <div class="day-date">15</div>
+      </div>
+      <div class="day-header toddler today">
+        <div class="day-name">Sat</div>
+        <div class="day-date">16</div>
+        <div><span class="toddler-chip">🧒 home</span></div>
+      </div>
+
+      <!-- ══════════════════ BREAKFAST ROW ══════════════════ -->
+      <div class="row-label">Break&shy;fast</div>
+
+      <!-- Sun — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Idli sambar</span>
+            <span class="status-badge badge-ready">● 4</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mon — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Oats porridge</span>
+            <span class="status-badge badge-ready">● 3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tue — past, empty -->
+      <div class="cell past">
+        <div class="cell-empty">+ Add meal</div>
+      </div>
+
+      <!-- Wed — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Dosa</span>
+            <span class="status-badge badge-ready">● 5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thu — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Upma</span>
+            <span class="status-badge badge-ready">● 4</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fri — past, empty -->
+      <div class="cell past">
+        <div class="cell-empty">+ Add meal</div>
+      </div>
+
+      <!-- Sat — TODAY · READY · starts EXPANDED to show the interaction -->
+      <div class="cell" id="c-sat-bfast" onclick="toggle('c-sat-bfast')">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Rava dosa</span>
+            <span class="status-badge badge-ready">● 3</span>
+            <div class="tile-actions" onclick="event.stopPropagation()">
+              <button class="icon-btn" title="Edit meal name">✎</button>
+              <button class="icon-btn" title="Delete meal">✕</button>
+            </div>
+          </div>
+          <div class="ingredient-section open" id="i-sat-bfast">
+            <div class="ingredient-inner">
+              <div class="ingredient-row"><input type="checkbox" checked> Semolina</div>
+              <div class="ingredient-row"><input type="checkbox" checked> Rice flour</div>
+              <div class="ingredient-row"><input type="checkbox"> Cumin seeds</div>
+              <div class="add-row">
+                <input class="add-input" type="text" placeholder="Add ingredient…">
+                <button class="add-btn">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════ LUNCH ROW ══════════════════ -->
+      <div class="row-label">Lunch</div>
+
+      <!-- Sun — past -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Sambar rice</span>
+            <span class="status-badge badge-ready">● 6</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mon — past, empty -->
+      <div class="cell past"><div class="cell-empty">+ Add meal</div></div>
+
+      <!-- Tue — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Curd rice</span>
+            <span class="status-badge badge-ready">● 3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wed — past, empty -->
+      <div class="cell past"><div class="cell-empty">+ Add meal</div></div>
+
+      <!-- Thu — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Dal rice</span>
+            <span class="status-badge badge-ready">● 5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fri — past, empty -->
+      <div class="cell past"><div class="cell-empty">+ Add meal</div></div>
+
+      <!-- Sat — TODAY · EDITING STATE (click empty cells to see this) -->
+      <div class="cell" id="c-sat-lunch">
+        <div class="cell-editing">
+          <input class="edit-input" type="text" value="Chana masala" placeholder="Meal name…">
+          <label class="toddler-toggle">
+            <input type="checkbox" checked>
+            Toddler-appropriate?
+          </label>
+          <div class="edit-actions">
+            <button class="btn-confirm">Confirm</button>
+            <button class="btn-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════ DINNER ROW ══════════════════ -->
+      <div class="row-label">Dinner</div>
+
+      <!-- Sun — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Rajma chawal</span>
+            <span class="status-badge badge-ready">● 5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mon — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Palak paneer</span>
+            <span class="status-badge badge-ready">● 6</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tue — past, empty -->
+      <div class="cell past"><div class="cell-empty">+ Add meal</div></div>
+
+      <!-- Wed — past, filled -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Aloo gobi</span>
+            <span class="status-badge badge-ready">● 4</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thu — past, empty -->
+      <div class="cell past"><div class="cell-empty">+ Add meal</div></div>
+
+      <!-- Fri — past · PENDING badge -->
+      <div class="cell past">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Misal pav</span>
+            <span class="status-badge badge-pending">
+              <span class="spinner-dot"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sat — TODAY · FAILED · click to expand and see manual-add -->
+      <div class="cell" id="c-sat-dinner" onclick="toggle('c-sat-dinner')">
+        <div class="cell-filled">
+          <div class="cell-header">
+            <span class="meal-name">Baingan bharta</span>
+            <span class="status-badge badge-warn">⚠</span>
+            <div class="tile-actions" onclick="event.stopPropagation()">
+              <button class="icon-btn" title="Edit meal name">✎</button>
+              <button class="icon-btn" title="Delete meal">✕</button>
+            </div>
+          </div>
+          <div class="ingredient-section" id="i-sat-dinner">
+            <div class="ingredient-inner">
+              <div class="warn-row">⚠ Ingredients unavailable — Ollama timed out.</div>
+              <div class="add-row">
+                <input class="add-input" type="text" placeholder="Add ingredient manually…">
+                <button class="add-btn">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /grid -->
+  </div><!-- /grid-scroll -->
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="swatch" style="background:var(--badge-ready-bg);outline:1px solid var(--badge-ready-text)"></div>
+      ●N — ingredients ready (N = count, click to expand)
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:var(--badge-pending-bg);outline:1px solid var(--badge-pending-text)"></div>
+      ⟳ — Ollama generating (click to expand)
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:var(--badge-warn-bg);outline:1px solid var(--badge-warn-text)"></div>
+      ⚠ — generation failed (click to expand + add manually)
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:var(--toddler-bg);outline:1px solid var(--toddler-text)"></div>
+      🧒 — toddler home day (constrained meal rules)
+    </div>
+    <div class="legend-item" style="opacity:0.5">
+      ░ greyed columns = past days (read-only, no controls)
+    </div>
+  </div>
+
+  <p class="note">
+    Interaction: <strong>click any filled Saturday cell</strong> to expand/collapse its ingredient section — only one can be open at a time.<br>
+    The <strong>Lunch / Saturday</strong> cell shows the editing state (inline form with toddler flag).<br>
+    All colours reference CSS variables; see <code>plan.md §3 Design Language</code> for the token list.
+  </p>
+
+  <script>
+    // Single-expand: only one ingredient section open at a time.
+    // This mirrors the expandedSlotId state in MealPlanGrid.
+    let openId = 'c-sat-bfast';
+
+    function toggle(cellId) {
+      const sectionId = 'i-' + cellId.slice(2); // c-sat-bfast → i-sat-bfast
+      const section = document.getElementById(sectionId);
+      if (!section) return;
+
+      if (openId === cellId) {
+        // Collapse current
+        section.classList.remove('open');
+        openId = null;
+      } else {
+        // Collapse previous
+        if (openId) {
+          const prev = document.getElementById('i-' + openId.slice(2));
+          if (prev) prev.classList.remove('open');
+        }
+        section.classList.add('open');
+        openId = cellId;
+      }
+    }
+
+    // Clicking an empty past cell does nothing (pointer-events: none on .cell.past).
+    // This script only handles the two interactive Saturday cells.
+  </script>
+
+</body>
+</html>
