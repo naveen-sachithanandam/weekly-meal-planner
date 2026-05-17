@@ -73,7 +73,7 @@ Implement T003. Do not go beyond T003.
 |---------|------|-------------|--------|
 | 001 — Meal plan grid | [`sdd/001-meal-plan-grid/spec.md`](sdd/001-meal-plan-grid/spec.md) | [`feature-001.html`](sdd/001-meal-plan-grid/feature-001.html) | Implemented |
 | 002 — Configuration | [`sdd/002-configuration/spec.md`](sdd/002-configuration/spec.md) | *planned* | Implemented |
-| 003 — Shopping list | *spec TBD* | *planned* | Not started |
+| 003 — Shopping list | [`sdd/003-shopping-list/spec.md`](sdd/003-shopping-list/spec.md) | *planned* | Implemented |
 
 ### Public vs private context
 

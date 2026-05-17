@@ -478,7 +478,7 @@ async function generateIngredients(slotId: string, mealName: string) {
 
 ## 5. Timezone Handling
 
-All date logic uses `date-fns-tz`. The home timezone is read from `env.HOME_TIMEZONE` in `lib/env.ts` (e.g. `America/Toronto`).
+All date logic uses `date-fns-tz`. The home timezone is read from `env.HOME_TIMEZONE` in `lib/env.ts` (e.g. `America/Chicago`).
 
 **Getting today in home timezone:**
 ```typescript
@@ -534,7 +534,7 @@ This logic lives in `lib/toddler.ts` and is called by the `GET /api/meal-plan` r
 Add to `.env.local` (gitignored):
 
 ```
-HOME_TIMEZONE=America/Toronto
+HOME_TIMEZONE=America/Chicago
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=llama3
 # Optional. Omit for cuisine-agnostic ingredient prompts.

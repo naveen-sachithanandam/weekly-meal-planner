@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { mutate as globalMutate } from "swr";
 
 import type { IngredientsStatus, MealPlanIngredient } from "../../../lib/types";
 
@@ -76,6 +77,9 @@ export function IngredientList({
       };
       setDrafts(toDrafts(body.ingredients));
       await onMutate?.();
+      await globalMutate(
+        (key) => typeof key === "string" && key.startsWith("/api/shopping-list"),
+      );
     } catch {
       setError("Failed to save ingredients");
     } finally {

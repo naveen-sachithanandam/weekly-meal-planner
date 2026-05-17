@@ -228,7 +228,7 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 
 | Variable | Example | Notes |
 |----------|---------|--------|
-| `HOME_TIMEZONE` | `America/Toronto` | IANA zone for day boundaries |
+| `HOME_TIMEZONE` | `America/Chicago` | IANA zone for day boundaries |
 | `OLLAMA_HOST` | `http://localhost:11434` | Host Ollama; Compose overrides in container |
 | `OLLAMA_MODEL` | `llama3.1` | Must match `ollama list`; run `ollama pull` first |
 | `DATABASE_URL` | `file:./dev.db` | Local SQLite path |

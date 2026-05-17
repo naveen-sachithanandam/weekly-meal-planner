@@ -13,13 +13,18 @@ export function AppNav() {
         >
           Weekly Meal Planner
         </Link>
-        <Link
-          href="/settings"
-          className="btn-neutral flex items-center gap-1.5 px-2 py-1 text-sm"
-        >
-          <span aria-hidden="true">⚙</span>
-          <span>Settings</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/shopping" className="btn-neutral px-2 py-1 text-sm">
+            Shopping list
+          </Link>
+          <Link
+            href="/settings"
+            className="btn-neutral flex items-center gap-1.5 px-2 py-1 text-sm"
+          >
+            <span aria-hidden="true">⚙</span>
+            <span>Settings</span>
+          </Link>
+        </div>
       </nav>
     </header>
   );

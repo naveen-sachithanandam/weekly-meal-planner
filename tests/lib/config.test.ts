@@ -54,10 +54,10 @@ describe("environment config", () => {
 
   it("trims whitespace from environment values", async () => {
     applyValidEnv();
-    process.env.HOME_TIMEZONE = "  America/Toronto  ";
+    process.env.HOME_TIMEZONE = "  America/Chicago  ";
 
     const config = await import("../../lib/config");
 
-    expect(config.HOME_TIMEZONE).toBe("America/Toronto");
+    expect(config.HOME_TIMEZONE).toBe("America/Chicago");
   });
 });

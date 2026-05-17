@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { applyValidEnv, clearConfigEnv } from "../helpers/env";
 
-/** Thursday 2026-05-14 noon in America/Toronto */
+/** Thursday 2026-05-14 noon in America/Chicago */
 const FIXED_NOW = new Date("2026-05-14T16:00:00.000Z");
 
 describe("home timezone date utilities", () => {

@@ -6,7 +6,7 @@ export const REQUIRED_ENV_KEYS = [
 ] as const;
 
 export const VALID_ENV: Record<(typeof REQUIRED_ENV_KEYS)[number], string> = {
-  HOME_TIMEZONE: "America/Toronto",
+  HOME_TIMEZONE: "America/Chicago",
   OLLAMA_HOST: "http://localhost:11434",
   OLLAMA_MODEL: "llama3.1",
   DATABASE_URL: "file:./prisma/test.db",

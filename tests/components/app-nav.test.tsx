@@ -23,4 +23,13 @@ describe("AppNav", () => {
     const homeLink = screen.getByRole("link", { name: /weekly meal planner/i });
     expect(homeLink).toHaveAttribute("href", "/");
   });
+
+  it("renders a shopping list link to /shopping", () => {
+    render(<AppNav />);
+
+    expect(screen.getByRole("link", { name: /shopping list/i })).toHaveAttribute(
+      "href",
+      "/shopping",
+    );
+  });
 });

@@ -118,3 +118,26 @@
     pointer-events: none;
   }
 }
+
+@media print {
+  .nav-header,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .print-list {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  .print-list-item {
+    break-inside: avoid;
+    font-size: 14pt;
+    padding: 0.5rem 0;
+  }
+}
