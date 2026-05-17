@@ -241,18 +241,22 @@ app/
 
 components/
 ├── meal-plan-grid/
-│   ├── meal-plan-grid.tsx          ← root: fetches week data via SWR, owns week navigation state
+│   ├── meal-plan-grid.tsx          ← root: SWR fetch, week nav state, row-label column + day columns
 │   ├── week-nav.tsx                ← weekly date range display with integrated prev/next chevrons
 │   │                                  e.g. ‹  May 10 – May 16  › plus a "this week" reset button
+│   ├── meal-type-row-labels.tsx    ← optional: left column listing meal type names for the week
 │   ├── day-column.tsx              ← one column per day; receives day data + mealTypes array;
 │   │                                  renders header + one MealSlotCell per active meal type
 │   ├── day-header.tsx              ← date label, toddler indicator, toddler override toggle
 │   └── meal-slot-cell/
-│       ├── meal-slot-cell.tsx      ← orchestrates empty / editing / filled states
+│       ├── meal-slot-cell.tsx      ← orchestrates empty / editing / filled states; may show
+│       │                                  meal type name above the slot if not using a shared row-label column
 │       ├── meal-slot-empty.tsx     ← click-to-edit empty state
 │       ├── meal-slot-editing.tsx   ← inline form: meal name input + toddler toggle + confirm/cancel
-│       ├── meal-slot-filled.tsx    ← displays meal name; click to re-edit
+│       ├── meal-slot-filled.tsx    ← meal name + explicit Edit/Delete tile actions;
+│       │                                  Delete confirms then DELETE /api/meal-slots/[id]
 │       ├── ingredient-list.tsx     ← lists ingredients with approve checkboxes + edit option
+│                                         (ingredient edit is separate from tile Edit)
 │       └── ingredient-loading.tsx  ← spinner shown while ingredientsStatus === "PENDING"
 ```
 
@@ -262,6 +266,20 @@ components/
 - Editing state (which cell is open) — local state in `meal-slot-cell.tsx`.
 
 **WeekNav layout:** The weekly date range label is the primary navigation surface. Prev (`‹`) and next (`›`) chevrons sit on either side of the date range string. A separate "This week" button resets `weekOffset` to 0. Prev chevron disabled when `weekOffset === -1`. Next chevron disabled when `weekOffset === 1`.
+
+**Meal type row labels (spec AC-009):** The grid must show each active meal type's `name` so rows are identifiable across the week. Two valid layouts (pick one in implementation):
+
+1. **Row-title column** — a narrow column to the left of the seven day columns lists meal type names once per row, aligned with that row's slots across all days.
+2. **Per-cell label** — each `MealSlotCell` renders the meal type name above the slot content (same label repeated in every day column for that row).
+
+Labels come from `mealTypes[]` on the meal plan response. Do not hardcode Breakfast/Lunch/Dinner strings. When Feature 002 renames or reorders types, labels and row order follow `mealTypes[]` on the next fetch.
+
+**Filled tile actions (spec AC-010):** Each non-past filled `MealSlotCell` renders a small action row on the tile:
+
+- **Edit** — calls `onStartEditing()` (same as opening `MealSlotEditing`).
+- **Delete** — confirm dialog, then `DELETE /api/meal-slots/[id]`, then `onMutate()`.
+
+Place actions in the tile header (e.g. top-right of `MealSlotFilled`) so they are always visible. The meal name may remain clickable for edit as a shortcut, but must not be the only affordance. Ingredient-list **Edit** edits ingredients only, not the meal name.
 
 **SWR polling:** While any slot in the current week has `ingredientsStatus === "PENDING"`, SWR refreshes every 3 seconds. Polling stops when all slots are `READY`, `FAILED`, or `EMPTY`.
 
@@ -412,7 +430,81 @@ DATABASE_URL=
 
 ---
 
-## 8. Out of Scope for This Plan
+## 8. Docker
+
+The app ships as a Docker image built with a multi-stage `Dockerfile`.
+A `docker-compose.yml` at the repo root orchestrates the container and volume.
+
+**`Dockerfile` (multi-stage):**
+```dockerfile
+# Stage 1 — deps
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Stage 2 — builder
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# Stage 3 — runner
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+**`docker-compose.yml`:**
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local          # gitignored — same file used for bare dev
+    environment:
+      DATABASE_URL: file:/data/meal-planner.db
+      OLLAMA_HOST: http://host.docker.internal:11434
+    volumes:
+      - meal-db:/data        # SQLite persisted here, never inside the image
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # Linux compatibility
+    restart: unless-stopped
+
+volumes:
+  meal-db:
+```
+
+**Key rules:**
+- Ollama is NOT a service in `docker-compose.yml`. It runs on the host.
+- `DATABASE_URL` overrides the value in `.env.local` to point to the volume path `/data/`.
+- `extra_hosts: host.docker.internal:host-gateway` ensures Linux hosts (non-Mac Docker) can also reach Ollama.
+- The `prisma/seed.ts` is run once after first deploy via `docker compose exec app npx prisma db seed`.
+
+**`.dockerignore`:**
+```
+node_modules
+.next
+*.db
+*.db-journal
+.env.local
+.env.*.local
+```
+
+---
+
+## 9. Out of Scope for This Plan
 
 The following are not addressed here and must not be implemented as part of Feature 001 tasks:
 

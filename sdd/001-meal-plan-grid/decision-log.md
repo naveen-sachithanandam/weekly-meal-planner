@@ -174,3 +174,36 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 - `app/page.tsx` renders `<MealPlanGrid />` with page title.
 
 **Alternatives considered:** Keep `mealType` string prop on `MealSlotCell` (rejected — duplicates config id/name and encourages enum-style literals in tests).
+
+---
+
+## DL-011 — MealSlotEditing PATCH for existing slots (AC-008)
+
+**Date:** 2026-05-16  
+**Status:** Resolved
+
+**Context:** T014 `MealSlotEditing` only POSTed to `/api/meal-slots`. Clicking a filled meal name opened the form but confirm always attempted a new slot (409 duplicate) instead of PATCH.
+
+**Decision:**
+- `MealSlotEditing` accepts optional `slotId`, `initialMealName`, `initialIsToddlerAppropriate`.
+- When `slotId` is set, confirm PATCHes `/api/meal-slots/[id]` (meal name change triggers ingredient reset per T007).
+- When `slotId` is absent, confirm POSTs a new slot as before.
+
+**Alternatives considered:** Separate `MealSlotEditing` and `MealSlotUpdating` components (rejected — same form fields and validation).
+
+---
+
+## DL-012 — T000 Docker packaging
+
+**Date:** 2026-05-16  
+**Status:** Resolved
+
+**Context:** Feature 001 assumes deployment via Docker on a Mac Mini with SQLite on a named volume and Ollama on the host.
+
+**Decision:**
+- Multi-stage `Dockerfile` per plan §8 with `output: 'standalone'` in `next.config.ts`.
+- `docker-compose.yml` loads `.env.local`, overrides `DATABASE_URL` to `file:/data/meal-planner.db` and `OLLAMA_HOST` to `host.docker.internal`.
+- `.dockerignore` excludes `node_modules`, `.next`, local DB files, and `.env.local`.
+- First deploy: `docker compose exec app npx prisma migrate deploy` and `npx prisma db seed` (Prisma CLI runs via exec from the builder’s tooling path documented in tasks).
+
+**Alternatives considered:** Bundling Ollama in compose (rejected — host-only per constitution).

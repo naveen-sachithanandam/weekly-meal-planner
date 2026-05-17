@@ -15,8 +15,12 @@ dist/
 *.db
 *.db-journal
 
-# Skills — installed by npx skills@latest, regenerable from skills-lock.json
-.agents/
+# Agent skills installed by npx (regenerable from skills-lock.json)
+.agents/skills/*
+!.agents/skills/orchestrate-issues/
+!.agents/skills/review-product/
+!.agents/skills/review-architect/
+!.agents/skills/review-qa/
 
 # Private household context — never commit these
 *.local.md
@@ -24,9 +28,6 @@ dist/
 
 # OS
 .DS_Store
-
-#Cursor Skills
-.agents/skills/
 
 #Article files
 *article-*.md

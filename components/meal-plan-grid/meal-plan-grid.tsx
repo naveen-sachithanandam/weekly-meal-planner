@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { getRefreshInterval } from "../../lib/meal-plan-refresh";
 import type { MealPlanResponse } from "../../lib/types";
 import { DayColumn } from "./day-column";
+import { MealTypeRowLabels } from "./meal-type-row-labels";
 import { WeekNav } from "./week-nav";
 
 async function fetchMealPlan(url: string): Promise<MealPlanResponse> {
@@ -41,16 +42,21 @@ export function MealPlanGrid() {
       {isLoading && <p>Loading meal plan…</p>}
       {error && <p role="alert">Could not load meal plan.</p>}
 
-      <div className="flex gap-2">
-        {data?.days.map((day) => (
-          <DayColumn
-            key={day.date}
-            day={day}
-            mealTypes={data.mealTypes}
-            onMutate={() => mutate()}
-          />
-        ))}
-      </div>
+      {data && (
+        <div className="flex gap-2">
+          <MealTypeRowLabels mealTypes={data.mealTypes} />
+          <div className="flex min-w-0 flex-1 gap-2">
+            {data.days.map((day) => (
+              <DayColumn
+                key={day.date}
+                day={day}
+                mealTypes={data.mealTypes}
+                onMutate={() => mutate()}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -46,6 +46,9 @@ export function MealSlotCell({
         <MealSlotEditing
           date={date}
           mealTypeConfigId={mealType.id}
+          slotId={slot?.id}
+          initialMealName={slot?.mealName}
+          initialIsToddlerAppropriate={slot?.isToddlerAppropriate}
           onSaved={onSaved}
           onCancel={onCancel}
         />

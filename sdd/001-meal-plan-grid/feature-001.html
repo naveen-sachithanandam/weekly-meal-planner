@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feature 001 — Weekly Meal Plan Grid</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f9;
+      color: #1a1d23;
+      line-height: 1.65;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    nav {
+      width: 240px;
+      flex-shrink: 0;
+      background: #1a1d23;
+      color: #c8cdd6;
+      padding: 32px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    nav .logo {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #fff;
+      padding: 0 24px 24px;
+      border-bottom: 1px solid #2e3340;
+    }
+
+    nav .feature-tag {
+      font-size: 11px;
+      color: #5a9cf8;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 20px 24px 8px;
+    }
+
+    nav a {
+      display: block;
+      padding: 7px 24px;
+      color: #8a909e;
+      text-decoration: none;
+      font-size: 13.5px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+
+    nav a:hover, nav a.active {
+      color: #fff;
+      border-left-color: #5a9cf8;
+      background: rgba(90,156,248,.06);
+    }
+
+    main {
+      flex: 1;
+      padding: 48px 56px;
+      max-width: 960px;
+    }
+
+    /* ── Header ── */
+    .page-header {
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #dde1ea;
+    }
+
+    .feature-badge {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #2563eb;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .page-header h1 {
+      font-size: 30px;
+      font-weight: 700;
+      color: #0f1117;
+      letter-spacing: -.02em;
+    }
+
+    .page-header .subtitle {
+      margin-top: 8px;
+      font-size: 16px;
+      color: #5a6072;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      font-size: 12px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .meta-chip strong { color: #374151; }
+
+    /* ── Sections ── */
+    section { margin-bottom: 56px; }
+
+    section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f1117;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    section h2 .section-num {
+      background: #1a1d23;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    section h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 24px 0 10px;
+    }
+
+    p { margin-bottom: 12px; color: #374151; }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    /* ── AC grid ── */
+    .ac-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .ac-item {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-left: 3px solid #5a9cf8;
+      border-radius: 6px;
+      padding: 16px;
+    }
+
+    .ac-item .ac-id {
+      font-size: 11px;
+      font-weight: 700;
+      color: #2563eb;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .ac-item p { font-size: 13px; margin-bottom: 0; }
+
+    /* ── Tech stack chips ── */
+    .stack-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+    .stack-chip {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    /* ── Diagrams ── */
+    .diagram-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .diagram-label {
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #6b7280;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .diagram-body {
+      padding: 24px;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    .mermaid { max-width: 100%; }
+
+    /* ── API table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+    }
+
+    th {
+      background: #f9fafb;
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    td { padding: 10px 16px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+    tr:last-child td { border-bottom: none; }
+
+    .method {
+      font-family: "SF Mono", monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    .get  { background: #d1fae5; color: #065f46; }
+    .post { background: #dbeafe; color: #1e40af; }
+    .patch { background: #fef3c7; color: #92400e; }
+    .delete { background: #fee2e2; color: #991b1b; }
+
+    code {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 12px;
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #be185d;
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <nav>
+    <div class="logo">Meal Planner</div>
+    <div class="feature-tag">Feature 001</div>
+    <a href="#overview">Overview</a>
+    <a href="#acceptance">Acceptance Criteria</a>
+    <a href="#stack">Tech Stack</a>
+    <a href="#data-model">Data Model</a>
+    <a href="#api">API Routes</a>
+    <a href="#components">Component Tree</a>
+    <a href="#sequence-save">Sequence: Save Slot</a>
+    <a href="#sequence-load">Sequence: Load Week</a>
+    <a href="#constraints">Key Constraints</a>
+    <div style="border-top:1px solid #2e3340; margin: 24px 0 12px;"></div>
+    <a href="../architecture-spec.html">↑ Architecture Spec</a>
+    <a href="../002-configuration/feature-002.html">Feature 002 →</a>
+  </nav>
+
+  <!-- ── Main ── -->
+  <main>
+
+    <!-- Header -->
+    <div class="page-header" id="overview">
+      <div class="feature-badge">Feature 001</div>
+      <h1>Weekly Meal Plan Grid</h1>
+      <p class="subtitle">
+        A 7-day meal planning grid for a single household. Meals are assigned to configurable
+        meal-type rows, ingredient lists are generated asynchronously by a local Ollama model,
+        and toddler-appropriate constraints are enforced at slot confirmation.
+      </p>
+      <div class="meta-row">
+        <div class="meta-chip"><strong>Status:</strong> In development</div>
+        <div class="meta-chip"><strong>Tasks:</strong> T001 – T016</div>
+        <div class="meta-chip"><strong>Depends on:</strong> None</div>
+        <div class="meta-chip"><strong>Unlocks:</strong> Feature 002, 003</div>
+      </div>
+    </div>
+
+    <!-- Acceptance Criteria -->
+    <section id="acceptance">
+      <h2><span class="section-num">01</span> Acceptance Criteria</h2>
+      <div class="ac-grid">
+        <div class="ac-item">
+          <div class="ac-id">AC-001</div>
+          <p>Slot saves immediately on confirm. Loading indicator appears. Toddler-appropriate question asked.</p>
+        </div>
+        <div class="ac-item">
+          <div class="ac-id">AC-002</div>
+          <p>Ingredients populate asynchronously without blocking other slots.</p>
+        </div>
+        <div class="ac-item">
+          <div class="ac-id">AC-003</div>
+          <p>Ollama unavailable: slot saves with empty ingredients. Manual add available.</p>
+        </div>
+        <div class="ac-item">
+          <div class="ac-id">AC-004</div>
+          <p>Past days are fully read-only. No edit controls rendered.</p>
+        </div>
+        <div class="ac-item">
+          <div class="ac-id">AC-005</div>
+          <p>Week navigation via ‹ / › on the date range display. Disabled at boundaries.</p>
+        </div>
+        <div class="ac-item">
+          <div class="ac-id">AC-006</div>
+          <p>Toddler home day flagging checks existing slots for conflicts before saving.</p>
+        </div>
+        <div class="ac-item">
+          <div class="ac-id">AC-007</div>
+          <p>Sunday is always the first column. Week boundary at 00:00 home timezone.</p>
+        </div>
+        <div class="ac-item">
+          <div class="ac-id">AC-008</div>
+          <p>Editing meal name discards ingredients and re-runs Ollama.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section id="stack">
+      <h2><span class="section-num">02</span> Tech Stack</h2>
+      <div class="card">
+        <h3>Frontend</h3>
+        <div class="stack-row">
+          <span class="stack-chip">Next.js 15</span>
+          <span class="stack-chip">React 19</span>
+          <span class="stack-chip">TypeScript 5</span>
+          <span class="stack-chip">Tailwind CSS</span>
+          <span class="stack-chip">SWR</span>
+          <span class="stack-chip">@dnd-kit</span>
+        </div>
+        <h3>Backend / Data</h3>
+        <div class="stack-row">
+          <span class="stack-chip">Next.js API Routes</span>
+          <span class="stack-chip">Prisma ORM</span>
+          <span class="stack-chip">SQLite</span>
+          <span class="stack-chip">date-fns-tz</span>
+        </div>
+        <h3>AI</h3>
+        <div class="stack-row">
+          <span class="stack-chip">Ollama (local)</span>
+          <span class="stack-chip">llama3</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Model -->
+    <section id="data-model">
+      <h2><span class="section-num">03</span> Data Model</h2>
+      <p>
+        Meal types are stored as <code>MealTypeConfig</code> records — not hardcoded as an enum.
+        This lets the household configure their own meal structure (e.g. add a "Supper" row)
+        without any code changes. Three defaults are seeded on first run: Breakfast, Lunch, Dinner.
+      </p>
+      <div class="diagram-card">
+        <div class="diagram-label">Entity Relationship Diagram</div>
+        <div class="diagram-body">
+          <pre class="mermaid">
+erDiagram
+    MealTypeConfig {
+        String id PK
+        String name UK
+        Int sortOrder
+        Boolean isActive
+        DateTime createdAt
+    }
+    MealSlot {
+        String id PK
+        String date
+        String mealTypeConfigId FK
+        String mealName
+        Boolean isToddlerAppropriate
+        Enum ingredientsStatus
+        DateTime createdAt
+        DateTime updatedAt
+    }
+    Ingredient {
+        String id PK
+        String mealSlotId FK
+        String name
+        Boolean approved
+    }
+    ToddlerOverride {
+        String id PK
+        String date UK
+        Boolean isHome
+    }
+
+    MealTypeConfig ||--o{ MealSlot : "one type → many slots"
+    MealSlot ||--o{ Ingredient : "one slot → many ingredients"
+          </pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Key design decisions</h3>
+        <p><strong>Dates as strings.</strong> <code>date</code> is stored as <code>YYYY-MM-DD</code> text, not <code>DateTime</code>. This avoids timezone drift when reading back from SQLite. The home timezone is applied at the API layer.</p>
+        <p><strong>Soft-delete for meal types.</strong> <code>MealTypeConfig.isActive</code> hides types from the grid without orphaning existing slot data.</p>
+        <p><strong><code>@@unique([date, mealTypeConfigId])</code>.</strong> One slot per meal type per day, enforced at the database level. Duplicate attempts return 409.</p>
+        <p style="margin-bottom:0"><strong>Ingredient approval.</strong> <code>Ingredient.approved</code> tracks whether the user has reviewed each ingredient before it flows to the shopping list in Feature 003.</p>
+      </div>
+    </section>
+
+    <!-- API Routes -->
+    <section id="api">
+      <h2><span class="section-num">04</span> API Routes</h2>
+
+      <div class="diagram-card">
+        <div class="diagram-label">API Route Map</div>
+        <div class="diagram-body">
+          <pre class="mermaid">
+graph LR
+    Client([Browser / SWR])
+
+    Client -->|GET ?week=| MP["/api/meal-plan"]
+    Client -->|POST| MS["/api/meal-slots"]
+    Client -->|PATCH| MSI["/api/meal-slots/[id]"]
+    Client -->|DELETE| MSD["/api/meal-slots/[id]"]
+    Client -->|PATCH| ING["/api/meal-slots/[id]/ingredients"]
+    Client -->|POST| TO["/api/toddler-overrides"]
+
+    MP --> DB[(SQLite)]
+    MS --> DB
+    MS -.->|fire and forget| OL[Ollama]
+    MSI --> DB
+    MSI -.->|if name changed| OL
+    MSD --> DB
+    ING --> DB
+    TO --> DB
+          </pre>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Route</th>
+            <th>Purpose</th>
+            <th>Key validation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td><code>/api/meal-plan</code></td>
+            <td>Fetch full week — slots, toddler overrides, meal types</td>
+            <td><code>?week=</code> defaults to current Sunday</td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td><code>/api/meal-slots</code></td>
+            <td>Save a new meal slot immediately, fire Ollama async</td>
+            <td>403 past day · 400 invalid type · 409 duplicate</td>
+          </tr>
+          <tr>
+            <td><span class="method patch">PATCH</span></td>
+            <td><code>/api/meal-slots/[id]</code></td>
+            <td>Edit meal name or toddler flag. Re-runs Ollama if name changes</td>
+            <td>403 past day</td>
+          </tr>
+          <tr>
+            <td><span class="method delete">DELETE</span></td>
+            <td><code>/api/meal-slots/[id]</code></td>
+            <td>Clear slot and cascade-delete ingredients</td>
+            <td>403 past day · 204 on success</td>
+          </tr>
+          <tr>
+            <td><span class="method patch">PATCH</span></td>
+            <td><code>/api/meal-slots/[id]/ingredients</code></td>
+            <td>Replace ingredient list, set status to READY</td>
+            <td>Full replace — deletes existing before inserting</td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td><code>/api/toddler-overrides</code></td>
+            <td>Mark a day as toddler home. Returns conflicts if meals planned</td>
+            <td><code>force: true</code> to save despite conflicts</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Component Tree -->
+    <section id="components">
+      <h2><span class="section-num">05</span> Component Tree</h2>
+      <p>
+        <code>MealPlanGrid</code> owns all week navigation state. It passes
+        <code>mealTypes[]</code> down to each <code>DayColumn</code>, which renders one
+        <code>MealSlotCell</code> per active meal type — never a hardcoded list of three.
+      </p>
+      <div class="diagram-card">
+        <div class="diagram-label">React Component Hierarchy</div>
+        <div class="diagram-body">
+          <pre class="mermaid">
+graph TD
+    Page["app/page.tsx"]
+    Page --> Grid["MealPlanGrid\n(owns weekOffset state, SWR)"]
+    Grid --> WeekNav["WeekNav\n(‹ date range › + This Week)"]
+    Grid --> DC["DayColumn × 7\n(receives day + mealTypes[])"]
+    DC --> DH["DayHeader\n(date, toddler indicator, override toggle)"]
+    DC --> MSC["MealSlotCell × N\n(one per active meal type)"]
+    MSC --> Empty["MealSlotEmpty\n(+ Add meal placeholder)"]
+    MSC --> Editing["MealSlotEditing\n(name input + toddler toggle)"]
+    MSC --> Filled["MealSlotFilled\n(meal name, click to edit)"]
+    Filled --> IL["IngredientList\n(approve checkboxes + manual add)"]
+    Filled --> ILoad["IngredientLoading\n(spinner while PENDING)"]
+
+    style Grid fill:#dbeafe,stroke:#2563eb
+    style MSC fill:#d1fae5,stroke:#065f46
+    style WeekNav fill:#fef3c7,stroke:#92400e
+          </pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sequence: Save Slot -->
+    <section id="sequence-save">
+      <h2><span class="section-num">06</span> Sequence: Saving a Meal Slot</h2>
+      <p>
+        The slot is persisted to the database before Ollama responds.
+        The UI receives the slot immediately and shows a loading indicator.
+        Ollama runs in the background — the response is never blocked on AI availability.
+      </p>
+      <div class="diagram-card">
+        <div class="diagram-label">Sequence Diagram — Save Meal Slot + Async Ingredient Generation</div>
+        <div class="diagram-body">
+          <pre class="mermaid">
+sequenceDiagram
+    actor U as User
+    participant UI as MealSlotEditing
+    participant API as POST /api/meal-slots
+    participant DB as SQLite (Prisma)
+    participant OL as Ollama (local)
+
+    U->>UI: Types meal name, confirms
+    UI->>API: POST { date, mealTypeConfigId, mealName, isToddlerAppropriate }
+    API->>DB: Check if date is past → 403 if yes
+    API->>DB: Check duplicate [date, mealTypeConfigId] → 409 if exists
+    API->>OL: GET ${OLLAMA_HOST} (reachability check)
+    alt Ollama reachable
+        API->>DB: INSERT MealSlot { ingredientsStatus: PENDING }
+    else Ollama down
+        API->>DB: INSERT MealSlot { ingredientsStatus: EMPTY }
+    end
+    API-->>UI: 200 { slot }
+    UI-->>U: Slot appears instantly with spinner
+
+    Note over API,OL: void generateIngredients() — fire and forget
+    API->>OL: POST /api/generate { model, prompt }
+    OL-->>API: ingredient list (comma-separated)
+    API->>DB: UPDATE slot → READY, INSERT ingredients
+
+    Note over UI: SWR polls every 3s while any slot is PENDING
+    UI-->>U: Spinner → ingredient list
+          </pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sequence: Load Week -->
+    <section id="sequence-load">
+      <h2><span class="section-num">07</span> Sequence: Loading the Meal Grid</h2>
+      <p>
+        SWR fetches the week data on mount and polls every 3 seconds while any slot
+        has <code>ingredientsStatus === PENDING</code>. Polling stops automatically
+        when all slots are resolved.
+      </p>
+      <div class="diagram-card">
+        <div class="diagram-label">Sequence Diagram — Week Load + SWR Polling</div>
+        <div class="diagram-body">
+          <pre class="mermaid">
+sequenceDiagram
+    actor U as User
+    participant Grid as MealPlanGrid (SWR)
+    participant API as GET /api/meal-plan
+    participant DB as SQLite (Prisma)
+
+    U->>Grid: Opens app / navigates week
+    Grid->>API: GET /api/meal-plan?week=2025-01-05
+    API->>DB: Fetch active MealTypeConfigs (sorted)
+    API->>DB: Fetch MealSlots + Ingredients for 7 days
+    API->>DB: Fetch ToddlerOverrides for 7 dates
+    API-->>Grid: { weekStart, mealTypes[], days[] }
+    Grid-->>U: Renders 7 columns × N meal type rows
+
+    loop Every 3s while any slot is PENDING
+        Grid->>API: GET /api/meal-plan?week=...
+        API-->>Grid: Updated response
+        Grid-->>U: Spinner → ingredient list (when READY)
+    end
+
+    Note over Grid: refreshInterval = 0 when all slots READY/FAILED/EMPTY
+          </pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Constraints -->
+    <section id="constraints">
+      <h2><span class="section-num">08</span> Key Constraints</h2>
+      <div class="card">
+        <h3>Non-negotiable rules from the project constitution</h3>
+        <table>
+          <thead><tr><th>Rule</th><th>Implementation</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Home timezone is the single source of truth</td>
+              <td><code>date-fns-tz</code> via <code>lib/date.ts</code>. <code>new Date()</code> never used for day boundaries.</td>
+            </tr>
+            <tr>
+              <td>Ollama never blocks the HTTP response</td>
+              <td><code>void generateIngredients()</code> — fire and forget after slot is saved.</td>
+            </tr>
+            <tr>
+              <td>Past days are read-only</td>
+              <td>API returns 403 on write. UI renders no controls on past cells.</td>
+            </tr>
+            <tr>
+              <td>Week starts on Sunday</td>
+              <td><code>startOfWeek(date, { weekStartsOn: 0 })</code> everywhere.</td>
+            </tr>
+            <tr>
+              <td>No hardcoded meal types</td>
+              <td>DayColumn renders slots from the <code>mealTypes[]</code> API response, never from an enum.</td>
+            </tr>
+            <tr>
+              <td>No raw <code>process.env</code> outside config</td>
+              <td>All env vars accessed via <code>lib/config.ts</code> typed exports.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('section[id], .page-header[id]');
+  const navLinks = document.querySelectorAll('nav a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+</body>
+</html>

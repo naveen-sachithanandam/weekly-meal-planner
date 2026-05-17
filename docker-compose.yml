@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: file:/data/meal-planner.db
+      OLLAMA_HOST: http://host.docker.internal:11434
+    volumes:
+      - meal-db:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  meal-db:

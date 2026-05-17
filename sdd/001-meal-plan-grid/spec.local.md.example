@@ -23,6 +23,11 @@ spec.local.md is gitignored.
 # -
 # -
 
+## Grid layout (local preference)
+# Optional: note how you want meal type row labels on the planner
+# (row-title column vs label on each slot). See spec.md AC-009.
+# Filled tiles should show explicit Edit and Delete (AC-010).
+
 ## User journeys — household examples
 # Optional: replace the generic journey examples with real meal names
 # from your household for local reference.
