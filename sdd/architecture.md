@@ -225,59 +225,84 @@ Feature 003 reuses `WeekNav` and the same week `offset` semantics. Approving an 
 
 ## 8. Sequence: save meal slot
 
-Slot is persisted before Ollama returns. UI shows the slot immediately; ingredients appear after background generation (or manual entry).
+Slot is persisted before Ollama returns. The HTTP response is **201**; ingredient generation runs in a background task (`scheduleIngredientGeneration` via Next.js `after()`). `MealPlanGrid` SWR polls every 3s while any slot is `PENDING`.
 
 ```mermaid
 sequenceDiagram
     actor U as User
     participant UI as MealSlotEditing
-    participant API as POST /api/meal-slots
+    participant API as MealSlots API
     participant DB as SQLite
+    participant BG as Ollama worker
     participant OL as Ollama
+    participant Grid as MealPlanGrid
 
-    U->>UI: Confirm meal name
-    UI->>API: POST slot
-    API->>DB: 403 if past day; 409 if duplicate
-    API->>OL: reachability check
-    alt reachable
-        API->>DB: INSERT PENDING
-    else unreachable
-        API->>DB: INSERT EMPTY
+    U->>UI: Types meal name, confirms
+    UI->>API: POST meal slot JSON
+    API->>DB: Reject past day with 403
+    API->>DB: Reject duplicate with 409
+    API->>OL: GET tags reachability check
+    alt Ollama reachable
+        API->>DB: INSERT slot as PENDING
+    else Ollama unavailable
+        API->>DB: INSERT slot as EMPTY
     end
-    API-->>UI: 200 slot
-    Note over API,OL: after() — generateIngredients
-    API->>OL: generate
-    OL-->>API: ingredient list
-    API->>DB: READY + Ingredient rows
-    Note over UI: SWR polls until not PENDING
+    API-->>UI: 201 slot JSON
+    UI->>Grid: onSaved revalidates SWR
+    UI-->>U: Filled tile with spinner
+
+    Note over API,BG: scheduleIngredientGeneration after response
+    API->>BG: enqueue generateIngredients
+    BG->>OL: POST api generate
+    alt success
+        OL-->>BG: comma-separated ingredients
+        BG->>DB: UPDATE READY and insert rows
+    else timeout or error
+        BG->>DB: UPDATE FAILED
+    end
+
+    loop Every 3s while slot is PENDING
+        Grid->>API: GET meal plan
+        API->>DB: Fetch week data
+        API-->>Grid: Updated days payload
+        Grid-->>U: Spinner becomes ingredient list
+    end
 ```
 
-Implementation: `lib/ollama.ts` (`scheduleIngredientGeneration`), Next.js `after()` so work continues after the response (see decision log DL-013).
+Implementation: `lib/ollama.ts`, `app/api/meal-slots/route.ts` (see decision log DL-013).
 
 ---
 
 ## 9. Sequence: load week
 
+SWR key: `/api/meal-plan?offset={n}` (also supports `?week=YYYY-MM-DD` for a Sunday). Polling interval comes from `getRefreshInterval()` in `lib/meal-plan-refresh.ts`.
+
 ```mermaid
 sequenceDiagram
     actor U as User
     participant Grid as MealPlanGrid
-    participant API as GET /api/meal-plan
+    participant API as MealPlan API
     participant DB as SQLite
 
-    U->>Grid: Open app / change week
-    Grid->>API: GET ?offset=
-    API->>DB: meal types, slots, overrides
-    API-->>Grid: weekStart, mealTypes, days
-    Grid-->>U: 7 columns × N rows
+    U->>Grid: Opens app or changes week
+    Grid->>API: GET meal-plan with offset
+    API->>DB: Fetch active meal types sorted
+    API->>DB: Fetch slots and ingredients for 7 days
+    API->>DB: Fetch toddler overrides for 7 dates
+    API-->>Grid: weekStart mealTypes days
+    Grid-->>U: Renders 7 columns by meal type rows
 
-    loop while any slot PENDING
-        Grid->>API: GET
-        API-->>Grid: updated ingredients
+    loop Every 3s while any slot is PENDING
+        Grid->>API: GET meal-plan with offset
+        API->>DB: Fetch week data
+        API-->>Grid: Updated days payload
+        Grid-->>U: Spinner becomes ingredient list when READY
     end
+
+    Note over Grid: refreshInterval 0 when no PENDING slots
 ```
 
-Week boundaries and `isPast` are computed server-side in `lib/date.ts` using `HOME_TIMEZONE` — the client never imports timezone logic.
+Week boundaries and `isPast` are computed server-side in `lib/date.ts` using `HOME_TIMEZONE`. The client never imports timezone logic.
 
 ---
 
