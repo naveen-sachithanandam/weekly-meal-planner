@@ -1,0 +1,4 @@
+{
+  "prisma.fileWatcher": true,
+  "prisma.trace.server": "off"
+}
