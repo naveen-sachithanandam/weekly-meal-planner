@@ -8,25 +8,25 @@ Single-household weekly meal planner (Next.js 15, SQLite, local Ollama). Built w
 
 Weekly grid with warm tokens, toddler-day labels, status badges, and collapsible meal slots.
 
-![Meal plan grid](docs/screenshots/01-meal-plan-grid.png)
+![Meal plan grid](./docs/screenshots/01-meal-plan-grid.png)
 
 ### Expanded meal slot
 
 Ingredient checklist with approve toggles; approved items sync to the shopping list.
 
-![Expanded meal slot](docs/screenshots/02-meal-slot-expanded.png)
+![Expanded meal slot](./docs/screenshots/02-meal-slot-expanded.png)
 
 ### Settings
 
 Meal types and household configuration.
 
-![Settings](docs/screenshots/03-settings.png)
+![Settings](./docs/screenshots/03-settings.png)
 
 ### Shopping list
 
 Deduped approved ingredients for the selected week (print-friendly).
 
-![Shopping list](docs/screenshots/04-shopping-list.png)
+![Shopping list](./docs/screenshots/04-shopping-list.png)
 
 ## Quick start
 
@@ -106,10 +106,9 @@ Implement T003. Do not go beyond T003.
 
 Household-specific cuisine and toddler diet live in **gitignored** files (`spec.local.md`, `.cursor/rules/household-context.mdc`). Committed `.example` templates show the shape without personal data — same pattern as `.env` / `.env.example`.
 
-### Further reading
+### Agent skills
 
-- [`sdd/medium-article-sdd.md`](sdd/medium-article-sdd.md) — narrative walkthrough of this SDD run
-- [`.agents/README.md`](.agents/README.md) — agent skills (`orchestrate-issues`, reviewers, `to-issues`)
+See [`.agents/README.md`](.agents/README.md) for `orchestrate-issues`, reviewers, and `to-issues`.
 
 ## Scripts
 
