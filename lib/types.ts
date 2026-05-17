@@ -35,6 +35,17 @@ export type MealPlanResponse = {
   days: MealPlanDay[];
 };
 
+export type MealTypeConfig = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+
+export type MealTypesResponse = {
+  mealTypes: MealTypeConfig[];
+};
+
 export type ShoppingListResponse = {
   weekStart: string;
   items: string[];
