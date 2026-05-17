@@ -79,7 +79,7 @@ describe("POST /api/toddler-overrides", () => {
       conflicts: [
         {
           slotId: slot.id,
-          mealTypeName: "Lunch",
+          mealType: "Lunch",
           mealName: "Misal pav",
         },
       ],

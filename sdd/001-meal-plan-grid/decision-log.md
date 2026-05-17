@@ -120,3 +120,20 @@ Record of spec-driven fixes and implementation choices. Each entry links to a Gi
 - Unchanged: `403` past day; `PENDING`/`EMPTY` on create; fire-and-forget `generateIngredients`.
 
 **Alternatives considered:** Accept both `mealType` and `mealTypeConfigId` during migration (rejected — dual contract complicates clients and tests).
+
+---
+
+## DL-008 — PATCH/DELETE meal-slots and toddler override conflicts
+
+**Date:** 2026-05-16  
+**Issues:** [#7](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/7), [#8](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/8), [#10](https://github.com/naveen-sachithanandam/weekly-meal-planner/issues/10)  
+**Status:** Resolved
+
+**Context:** After T002 (`MealTypeConfig`), PATCH responses must expose `mealTypeConfigId` / `mealTypeName` (via shared `serializeMealSlot`). Toddler override conflict detection previously returned enum-style `mealType` strings; conflicts must use the configured meal type display name.
+
+**Decision:**
+- `PATCH /api/meal-slots/[id]` — response uses `serializeMealSlot` (`mealTypeConfigId`, `mealTypeName`); unchanged validation (`403` past day, ingredient reset on `mealName` change).
+- `DELETE /api/meal-slots/[id]` — unchanged (`204`, cascade delete, `403` past day).
+- `POST /api/toddler-overrides` — `conflicts[]` entries use `{ slotId, mealType, mealName }` where `mealType` is `MealTypeConfig.name` (e.g. `"Lunch"`), not a `MealType` enum string.
+
+**Alternatives considered:** Rename conflict field to `mealTypeName` (rejected — plan §2 keeps the `mealType` key; only the value becomes the config name).

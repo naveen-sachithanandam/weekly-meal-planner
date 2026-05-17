@@ -30,7 +30,7 @@ async function findConflicts(date: string) {
 
   return slots.map((slot) => ({
     slotId: slot.id,
-    mealTypeName: slot.mealTypeConfig.name,
+    mealType: slot.mealTypeConfig.name,
     mealName: slot.mealName,
   }));
 }

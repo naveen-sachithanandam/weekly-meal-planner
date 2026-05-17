@@ -4,7 +4,7 @@ import { format, parse } from "date-fns";
 
 type ToddlerOverrideConflict = {
   slotId: string;
-  mealTypeName: string;
+  mealType: string;
   mealName: string;
 };
 
@@ -30,7 +30,7 @@ function formatDayHeader(date: string): { dayName: string; dateLabel: string } {
 
 function buildConflictMessage(conflicts: ToddlerOverrideConflict[]): string {
   const lines = conflicts.map(
-    (conflict) => `${conflict.mealTypeName}: ${conflict.mealName}`,
+    (conflict) => `${conflict.mealType}: ${conflict.mealName}`,
   );
   return `Some meals may not be toddler-appropriate:\n${lines.join("\n")}\n\nSave anyway?`;
 }
@@ -67,7 +67,7 @@ export function DayHeader({ date, isToddlerHome, isPast, onMutate }: DayHeaderPr
         if (!confirmed) {
           return;
         }
-        await postToddlerOverride(date, true, true);
+        await postToddlerOverride(date, nextIsHome, true);
       }
 
       await onMutate();

@@ -86,6 +86,8 @@ describe("PATCH /api/meal-slots/[id]", () => {
     expect(response.status).toBe(200);
     expect(body).toMatchObject({
       id: slot.id,
+      mealTypeConfigId: dinnerId,
+      mealTypeName: "Dinner",
       mealName: "Chapati with sabzi",
       isToddlerAppropriate: false,
       ingredientsStatus: "READY",
@@ -140,6 +142,8 @@ describe("PATCH /api/meal-slots/[id]", () => {
 
     expect(response.status).toBe(200);
     expect(body).toMatchObject({
+      mealTypeConfigId: dinnerId,
+      mealTypeName: "Dinner",
       mealName: "Prawn masala",
       ingredientsStatus: "PENDING",
       ingredients: [],
@@ -183,6 +187,8 @@ describe("PATCH /api/meal-slots/[id]", () => {
 
     expect(response.status).toBe(200);
     expect(body).toMatchObject({
+      mealTypeConfigId: breakfastId,
+      mealTypeName: "Breakfast",
       mealName: "Idli",
       isToddlerAppropriate: true,
       ingredientsStatus: "READY",
