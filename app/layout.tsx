@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   description: "Household weekly meal planner",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

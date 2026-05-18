@@ -5,6 +5,7 @@ import useSWR from "swr";
 
 import type { ShoppingListResponse } from "../../lib/types";
 import { WeekNav } from "../meal-plan-grid/week-nav";
+import { ShoppingListShareActions } from "./shopping-list-share-actions";
 
 async function fetchShoppingList(url: string): Promise<ShoppingListResponse> {
   const response = await fetch(url);
@@ -45,6 +46,7 @@ export function ShoppingListView() {
 
       {data && !isLoading && !error && (
         <>
+          <ShoppingListShareActions weekStart={data.weekStart} items={data.items} />
           {data.items.length === 0 ? (
             <p className="surface-card px-4 py-6 text-center text-sm text-muted">
               No approved ingredients for this week. Approve ingredients on the meal plan,

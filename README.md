@@ -120,6 +120,17 @@ docker compose build && docker compose up -d
 
 Ollama on the host: set `OLLAMA_HOST=http://host.docker.internal:11434` in Compose (see `.env.example` and `sdd/001-meal-plan-grid/decision-log.md` DL-013).
 
+## Home network (phone / tablet)
+
+The app listens on all interfaces (`0.0.0.0:3000`) in Docker and during `npm run dev`.
+
+1. Find the Mac Mini’s LAN IP (e.g. `ipconfig getifaddr en0` or **System Settings → Network**).
+2. On a device on the same Wi‑Fi, open `http://<lan-ip>:3000` (meal plan) or `http://<lan-ip>:3000/shopping`.
+3. **Shopping list → Share list** opens the system share sheet (WhatsApp, Messages, etc.) when the browser allows it.
+4. **Send via WhatsApp** always works as a direct link with the list pre-filled (useful on plain `http://` LAN URLs, where the share sheet may be unavailable).
+
+After code changes when using Docker: `docker compose build && docker compose up -d`.
+
 ## License
 
 Private household project; adjust license if you fork publicly.
