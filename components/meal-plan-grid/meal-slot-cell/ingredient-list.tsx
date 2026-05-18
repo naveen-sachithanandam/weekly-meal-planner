@@ -167,7 +167,7 @@ export function IngredientList({
                 />
               ) : (
                 <>
-                  <label className="flex min-w-0 flex-1 items-center gap-2 text-xs text-gray-700">
+                  <label className="flex min-h-10 min-w-0 flex-1 items-center gap-2 text-xs text-gray-700 sm:min-h-0">
                     <input
                       type="checkbox"
                       checked={ingredient.approved}
@@ -176,6 +176,7 @@ export function IngredientList({
                       }
                       disabled={isSaving}
                       aria-label={`Approve ${ingredient.name}`}
+                      className="size-4 shrink-0"
                     />
                     <span className="truncate">{ingredient.name}</span>
                   </label>

@@ -45,13 +45,20 @@ export function ShoppingListShareActions({ weekStart, items }: Props) {
   }
 
   return (
-    <div className="no-print mb-4 flex flex-wrap items-center gap-2" data-testid="shopping-list-share">
-      <button type="button" className="btn-accent px-3 py-2 text-sm" onClick={onShare}>
+    <div
+      className="no-print mb-4 flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
+      data-testid="shopping-list-share"
+    >
+      <button
+        type="button"
+        className="btn-accent btn-touch w-full px-3 py-2.5 text-sm sm:w-auto sm:py-2"
+        onClick={onShare}
+      >
         Share list
       </button>
       <a
         href={whatsAppUrl}
-        className="btn-neutral inline-flex px-3 py-2 text-sm"
+        className="btn-neutral btn-touch inline-flex w-full justify-center px-3 py-2.5 text-sm sm:w-auto sm:py-2"
         target="_blank"
         rel="noopener noreferrer"
       >

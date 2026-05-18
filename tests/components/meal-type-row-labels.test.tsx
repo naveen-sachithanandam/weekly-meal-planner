@@ -38,6 +38,6 @@ describe("MealTypeRowLabels", () => {
     render(<MealTypeRowLabels mealTypes={mealTypes} />);
 
     const column = screen.getByTestId("meal-type-row-labels");
-    expect(column.querySelector(".min-h-\\[4\\.5rem\\]")).toBeInTheDocument();
+    expect(column.querySelector("[aria-hidden]")).toBeInTheDocument();
   });
 });

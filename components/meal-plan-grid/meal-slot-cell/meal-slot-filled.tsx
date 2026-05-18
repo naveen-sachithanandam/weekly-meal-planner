@@ -92,7 +92,7 @@ export function MealSlotFilled({
             onClick={handleEdit}
             disabled={isDeleting}
             aria-label="Edit meal"
-            className="btn-neutral px-2 py-0.5 text-xs disabled:opacity-50"
+            className="btn-neutral btn-touch px-2.5 py-1.5 text-xs disabled:opacity-50 sm:px-2 sm:py-0.5"
           >
             ✎
           </button>
@@ -101,7 +101,7 @@ export function MealSlotFilled({
             onClick={(event) => void handleDelete(event)}
             disabled={isDeleting}
             aria-label="Delete meal"
-            className="btn-danger px-2 py-0.5 text-xs disabled:opacity-50"
+            className="btn-danger btn-touch px-2.5 py-1.5 text-xs disabled:opacity-50 sm:px-2 sm:py-0.5"
           >
             {isDeleting ? "…" : "✕"}
           </button>

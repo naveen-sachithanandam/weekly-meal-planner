@@ -129,6 +129,8 @@ The app listens on all interfaces (`0.0.0.0:3000`) in Docker and during `npm run
 3. **Shopping list → Share list** opens the system share sheet (WhatsApp, Messages, etc.) when the browser allows it.
 4. **Send via WhatsApp** always works as a direct link with the list pre-filled (useful on plain `http://` LAN URLs, where the share sheet may be unavailable).
 
+On Android phones, the meal plan grid **scrolls sideways** through the week; buttons use larger touch targets. Shopping share actions are full-width on narrow screens.
+
 After code changes when using Docker: `docker compose build && docker compose up -d`.
 
 ## License

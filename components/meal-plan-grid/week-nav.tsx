@@ -34,24 +34,26 @@ export function WeekNav({
   const rangeLabel = formatWeekRange(weekStart) || "Loading week…";
 
   return (
-    <nav className="mb-4 flex flex-wrap items-center gap-3">
-      <div className="flex items-center gap-2 text-sm">
+    <nav className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="flex w-full items-center justify-between gap-2 text-sm sm:w-auto sm:justify-start">
         <button
           type="button"
           aria-label="Previous week"
           onClick={onPreviousWeek}
           disabled={!canGoPrev}
-          className="btn-neutral px-2 py-1 text-lg leading-none disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-neutral btn-touch px-3 py-2 text-lg leading-none disabled:cursor-not-allowed disabled:opacity-40"
         >
           ‹
         </button>
-        <span className="min-w-[10rem] text-center font-medium">{rangeLabel}</span>
+        <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-[10rem] sm:text-base">
+          {rangeLabel}
+        </span>
         <button
           type="button"
           aria-label="Next week"
           onClick={onNextWeek}
           disabled={!canGoNext}
-          className="btn-neutral px-2 py-1 text-lg leading-none disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-neutral btn-touch px-3 py-2 text-lg leading-none disabled:cursor-not-allowed disabled:opacity-40"
         >
           ›
         </button>
@@ -60,7 +62,7 @@ export function WeekNav({
         type="button"
         aria-label="This week"
         onClick={onCurrentWeek}
-        className="btn-accent px-3 py-1 text-sm"
+        className="btn-accent w-full px-3 py-2.5 text-sm sm:w-auto sm:py-1"
       >
         This week
       </button>

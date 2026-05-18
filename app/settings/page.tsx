@@ -2,7 +2,7 @@ import { ConfigurationPage } from "../../components/configuration/configuration-
 
 export default function SettingsPage() {
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="page-shell-narrow">
       <ConfigurationPage />
     </main>
   );

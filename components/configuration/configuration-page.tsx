@@ -22,7 +22,7 @@ export function ConfigurationPage() {
 
   return (
     <section>
-      <h1 className="mb-6 text-2xl font-semibold">Settings</h1>
+      <h1 className="page-title">Settings</h1>
       <h2 className="mb-3 text-lg font-medium text-gray-900">Meal types</h2>
 
       <AddMealTypeForm onAdded={() => mutate()} />

@@ -23,9 +23,15 @@
 }
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     background: var(--color-base);
     color: var(--color-text);
+    overflow-x: hidden;
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
 
@@ -116,6 +122,81 @@
   .day-column-past {
     opacity: 0.45;
     pointer-events: none;
+  }
+
+  .page-shell {
+    margin-inline: auto;
+    width: 100%;
+    overflow-x: hidden;
+    padding: 1rem 0.75rem;
+  }
+
+  .page-shell-narrow {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 42rem;
+    overflow-x: hidden;
+    padding: 1rem 0.75rem;
+  }
+
+  .page-title {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .meal-plan-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .meal-plan-scroll-hint {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  @media (min-width: 640px) {
+    .page-shell,
+    .page-shell-narrow {
+      padding: 1.25rem 1.25rem;
+    }
+
+    .page-title {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+    }
+
+    .meal-plan-scroll {
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+
+    .meal-plan-scroll-hint {
+      display: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .page-shell,
+    .page-shell-narrow {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .btn-touch {
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 }
 

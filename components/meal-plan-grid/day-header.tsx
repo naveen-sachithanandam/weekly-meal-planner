@@ -20,10 +20,15 @@ type DayHeaderProps = {
   onMutate: () => void | Promise<unknown>;
 };
 
-function formatDayHeader(date: string): { dayName: string; dateLabel: string } {
+function formatDayHeader(date: string): {
+  dayName: string;
+  dayNameShort: string;
+  dateLabel: string;
+} {
   const parsed = parse(date, "yyyy-MM-dd", new Date());
   return {
     dayName: format(parsed, "EEEE"),
+    dayNameShort: format(parsed, "EEE"),
     dateLabel: format(parsed, "MMM d"),
   };
 }
@@ -54,7 +59,7 @@ async function postToddlerOverride(
 }
 
 export function DayHeader({ date, isToddlerHome, isPast, onMutate }: DayHeaderProps) {
-  const { dayName, dateLabel } = formatDayHeader(date);
+  const { dayName, dayNameShort, dateLabel } = formatDayHeader(date);
 
   async function handleToggle() {
     const nextIsHome = !isToddlerHome;
@@ -82,7 +87,8 @@ export function DayHeader({ date, isToddlerHome, isPast, onMutate }: DayHeaderPr
       className="surface-card mb-2 px-2 py-2"
     >
       <div className="flex flex-col gap-0.5 text-center">
-        <p className="text-sm font-semibold">{dayName}</p>
+        <p className="text-sm font-semibold sm:hidden">{dayNameShort}</p>
+        <p className="hidden text-sm font-semibold sm:block">{dayName}</p>
         <p className="text-xs text-muted">{dateLabel}</p>
       </div>
 
@@ -101,7 +107,7 @@ export function DayHeader({ date, isToddlerHome, isPast, onMutate }: DayHeaderPr
             type="button"
             aria-label={isToddlerHome ? "Mark toddler away" : "Mark toddler home"}
             onClick={() => void handleToggle()}
-            className="btn-neutral px-2 py-0.5 text-xs"
+            className="btn-neutral btn-touch px-2 py-1.5 text-xs sm:py-0.5"
           >
             {isToddlerHome ? "Toddler away" : "Toddler home"}
           </button>

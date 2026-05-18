@@ -21,7 +21,9 @@ export function DayColumn({
     <div
       data-testid="day-column"
       data-past={day.isPast}
-      className={`min-w-0 flex flex-1 flex-col gap-2 ${day.isPast ? "day-column-past" : ""}`}
+      className={`flex w-[9.25rem] shrink-0 flex-col gap-2 sm:w-auto sm:min-w-0 sm:flex-1 ${
+        day.isPast ? "day-column-past" : ""
+      }`}
     >
       <DayHeader
         date={day.date}

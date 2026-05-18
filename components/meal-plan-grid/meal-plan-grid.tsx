@@ -56,21 +56,28 @@ export function MealPlanGrid() {
       )}
 
       {data && (
-        <div className="flex gap-2">
-          <MealTypeRowLabels mealTypes={data.mealTypes} />
-          <div className="flex min-w-0 flex-1 gap-2">
-            {data.days.map((day) => (
-              <DayColumn
-                key={day.date}
-                day={day}
-                mealTypes={data.mealTypes}
-                expandedSlotId={expandedSlotId}
-                onToggleExpand={handleToggleExpand}
-                onMutate={() => mutate()}
-              />
-            ))}
+        <>
+          <p className="meal-plan-scroll-hint" aria-hidden="true">
+            Swipe sideways to see all days
+          </p>
+          <div className="meal-plan-scroll" data-testid="meal-plan-scroll">
+            <div className="flex w-max min-w-full gap-2 sm:w-auto">
+              <MealTypeRowLabels mealTypes={data.mealTypes} />
+              <div className="flex gap-2">
+                {data.days.map((day) => (
+                  <DayColumn
+                    key={day.date}
+                    day={day}
+                    mealTypes={data.mealTypes}
+                    expandedSlotId={expandedSlotId}
+                    onToggleExpand={handleToggleExpand}
+                    onMutate={() => mutate()}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </section>
   );
